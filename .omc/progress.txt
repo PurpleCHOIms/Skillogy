@@ -1,0 +1,136 @@
+# skill-trigger-graph — ralph progress log
+
+Started: 2026-04-26
+Spec: .omc/specs/deep-interview-skill-trigger-graph.md
+PRD: .omc/prd.json (12 stories)
+
+## Iteration 1
+
+### Setup
+- prd.json scaffold not auto-generated; wrote 12 task-specific stories with concrete acceptance criteria
+- Loaded agent-tiers reference
+- Working directory empty except for research/ docs and .omc/ planning
+
+### Plan
+- US-001 through US-007: backend (Python). Sequential dependencies.
+- US-008, US-009: web UI. Can start scaffolding in parallel after US-004 (graph snapshot exists).
+- US-010, US-011: benchmark. Depends on US-005 (router).
+- US-012: integration verification gate.
+
+### Codebase patterns to learn
+- 652 SKILL.md files under ~/.claude. Many use non-standard frontmatter (27 fields surveyed).
+- Only `name` (99.5%) and `description` (99.2%) reliably present.
+- Body median 15K chars; need chunking for LLM extraction.
+
+### Background indexing strategy
+- Plan: kick off SKILL.md scan + LLM extraction once US-002+US-003+US-004 are testable.
+- Leaves UI work and benchmark work to proceed in parallel while indexing runs.
+
+## Iteration 2
+
+### US-001 done — scaffold + dual auth
+- Files: pyproject.toml, skill_router/__init__.py, skill_router/auth.py, tests/__init__.py, tests/test_auth.py
+- Used .venv/ (PEP 668 distro). claude-agent-sdk treated as runtime injected (not on PyPI), try-import pattern.
+- Auth class: LLMClient base + _SDKClient + _APIClient. get_llm_client() prefers SDK if importable+no env override, else env-key, else RuntimeError.
+- Pytest: 3 passed in 0.68s.
+- Pyright noise: hint-level unused params on base class abstract methods, and venv-not-detected import errors in tests. Functional behaviour OK.
+
+### Next batch fired in parallel
+- US-002 (scanner) — depends only on package skeleton from US-001
+- US-008 (Web UI Vite + skill catalog) — independent stack, can start scaffolding
+
+## Iteration 3
+
+### US-002 done (background agent)
+- Files: skill_router/types.py (ParsedSkill dataclass), skill_router/scanner.py, tests/test_scanner.py
+- Scan of real ~/.claude tree found 652 SKILL.md (acceptance criterion satisfied)
+- 5 tests pass
+
+### auth.py refactor (Claude Agent SDK proper API)
+- Per user: use context7 for SDK docs. Resolved /anthropics/claude-agent-sdk-python
+- Real API: query() async iterator, ClaudeAgentOptions(system_prompt, max_turns, ...), AssistantMessage with TextBlock content, ResultMessage with cost
+- Note: ClaudeAgentOptions does not expose model selector — Agent SDK uses Claude Code session model. Documented limitation in auth.py.
+- _SDKClient.complete() now wraps async query() via anyio.run; collects TextBlock chunks
+- Updated test_sdk_path to mock query/AssistantMessage/TextBlock/ClaudeAgentOptions
+- 3 tests still pass
+
+### US-008 still running in background
+
+### Firing next: US-003 (extractor)
+
+## Iteration 4 — Multi-completion convergence
+
+### Background completions
+- US-003 extractor: 5 passed, 1 skipped (no LLM creds smoke test)
+- US-008 Web UI scaffold: vite/shadcn/cytoscape-ready scaffold + FastAPI backend; npm build OK; API serves skills
+- US-010 eval set: 7 passed (mocked network + LLM)
+
+### Scanner refactor
+- US-008's executor created its own scanner (single-dir scope ~/.claude/skills only -> 66 skills); test_scanner.py written by US-002 expected the PRD-spec API (default_roots + parse_skill_md + scan_skills(roots)). API mismatch broke test collection.
+- Refactored skill_router/scanner.py to PRD spec: default_roots() returns existing roots in [~/.claude/skills, ~/.claude/plugins, ./.claude/skills], scan_skills(roots) recursively walks all of them with dedup-by-resolved-path.
+- After refactor: scan_skills() returns 616 skills (vs 66 before) — covers full ~/.claude/plugins tree.
+
+### Verification snapshot
+- Full pytest: 20 passed, 1 skipped (extractor smoke skipped due to no API key; functional code path covered by mocks).
+- Web build: npm run build OK (125 modules, 0 errors).
+- FastAPI smoke: /api/skills returns full set (now 616), /api/skills/{name} returns full body, /api/graph returns {nodes:[], edges:[]} stub.
+- Auth: SDK path + env path + no-creds RuntimeError all verified by mocks. Real API key smoke pending — env var not set in this environment.
+
+### Next: US-004 graph builder (depends on US-003 ExtractedSkill, ready)
+
+## Iteration 5 — Neo4j refactor decision
+
+### US-004 + US-005 done first (networkx-based)
+- US-004 graph builder: 5 tests pass (build/enrich/save/load roundtrip/forbidden_by edge)
+- US-005 router: 5 tests pass (typescript pick/forbidden_by/no-embed/top-K/skill_body from disk)
+
+### User: "그래프DB를 사용했으면 하는데? Neo4j 리서치"
+### User: "시간은 앞으로 고려하지마"
+
+### Research: Kuzu vs Neo4j (no time pressure)
+- Kuzu: pip install, no Docker, faster ingest, embedded
+- Neo4j: industry standard, Bloom viz, neo4j-graphrag-python first-party, Docker
+- Decision: **Neo4j 5 Community via Docker** — user named it explicitly + branding/ecosystem ↑
+
+### Refactor scope (firing executor now)
+- new docker-compose.yml + skill_router/db.py
+- rewrite skill_router/graph.py (networkx -> neo4j Cypher)
+- rewrite skill_router/router.py (networkx traversal -> single Cypher with edge-weighted scoring + forbidden_by exclusion)
+- web_api.py /api/graph query Neo4j with graceful fallback when down
+- Tests use FakeDriver mock for unit + @pytest.mark.integration for testcontainers
+- US-009 unaffected (consumes /api/graph JSON contract; backend keeps shape)
+- US-005 PRD entry stays passes:true (deliverable still met by spec, just changing engine under the hood)
+
+### Background executor fired
+
+## Iteration 6 — Round 13: knowledge-map upgrade
+
+### User direction (Round 13)
+- RESTORE inter-skill RELATES_TO edges (skills as knowledge map nodes — organic graph)
+- Canvas-style UI: polished knowledge-map view (toolbar + legend + scope clusters + hover dim)
+- Per-project scope visualization stays
+- Trigger-centric semantics still dominate; RELATES_TO is a SOFT BOOST in alternatives only
+
+### Schema additions (extend, don't replace)
+- 3rd edge type: `(:Skill)-[:RELATES_TO]->(:Skill)` with self-loop + dangling guards
+- types.py: TriggerSurface.related_skills: list[str]
+- extractor: emit related_skills key; backtick/see-also/use-X-first patterns
+- graph.py Pass 3: build RELATES_TO when target Skill exists
+- router.py: follow-up Cypher fetches RELATES_TO neighbors of top-1, appends to alternatives with via="relates_to" marker (dedup against primary hits)
+- export_graph_json: includes RELATES_TO with etype="relates_to"
+
+### UI/UX (canvas knowledge-map)
+- fcose default layout + selector dropdown
+- Skill 60x60 rounded sq, scope-tinted border; Intent 24px circle; Signal 18px diamond color-by-signal_kind
+- Edges: TRIGGERED_BY green, EXCLUDED_BY red dashed, RELATES_TO thick translucent blue
+- Hover: highlight 1-hop neighbors, dim others 20%
+- Toolbar: layout / cluster-by-scope / hide-signals / show-only-related
+- Legend overlay top-right
+- Smooth wheelSensitivity
+
+### Out of scope
+- auth, db, scanner, mcp_server, hook, bench (untouched)
+- RoutingResult shape unchanged (alternatives just gains optional 'via' key)
+- No 4th predicate
+
+### Firing US-013 + US-015 in parallel (independent files)

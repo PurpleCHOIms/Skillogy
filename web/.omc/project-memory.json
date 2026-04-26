@@ -1,0 +1,190 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1777183279118,
+  "projectRoot": "/home/catow/GIT/Hackathon/web",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "19.2.5",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.5",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "8.0.10",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc -b && vite build",
+      "lint": "eslint .",
+      "preview": "vite preview"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 3,
+      "lastAccessed": 1777183279024,
+      "keyFiles": [
+        "favicon.svg",
+        "icons.svg",
+        "index.html"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 2,
+      "lastAccessed": 1777183279032,
+      "keyFiles": [
+        "favicon.svg",
+        "icons.svg"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 5,
+      "lastAccessed": 1777183279080,
+      "keyFiles": [
+        "App.css",
+        "App.tsx",
+        "cytoscape-shims.d.ts",
+        "index.css",
+        "main.tsx"
+      ]
+    },
+    "dist/assets": {
+      "path": "dist/assets",
+      "purpose": "Static assets",
+      "fileCount": 5,
+      "lastAccessed": 1777183279096,
+      "keyFiles": [
+        "geist-cyrillic-wght-normal-CHSlOQsW.woff2",
+        "geist-latin-ext-wght-normal-DMtmJ5ZE.woff2",
+        "geist-latin-wght-normal-Dm3htQBi.woff2"
+      ]
+    },
+    "src/assets": {
+      "path": "src/assets",
+      "purpose": "Static assets",
+      "fileCount": 3,
+      "lastAccessed": 1777183279099,
+      "keyFiles": [
+        "hero.png",
+        "react.svg",
+        "vite.svg"
+      ]
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 4,
+      "lastAccessed": 1777183279102,
+      "keyFiles": [
+        "SkillDetail.tsx",
+        "SkillGraph.tsx",
+        "theme-provider.tsx"
+      ]
+    },
+    "src/lib": {
+      "path": "src/lib",
+      "purpose": "Library code",
+      "fileCount": 2,
+      "lastAccessed": 1777183279103,
+      "keyFiles": [
+        "api.ts",
+        "utils.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/components/SkillGraph.tsx",
+      "accessCount": 24,
+      "lastAccessed": 1777186867716,
+      "type": "file"
+    },
+    {
+      "path": "src/App.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1777187001212,
+      "type": "file"
+    },
+    {
+      "path": "src/components/SkillDetail.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1777183544274,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/api.ts",
+      "accessCount": 4,
+      "lastAccessed": 1777186703149,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 2,
+      "lastAccessed": 1777183458311,
+      "type": "directory"
+    },
+    {
+      "path": "src/components/ui/scroll-area.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777183406248,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

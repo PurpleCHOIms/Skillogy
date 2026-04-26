@@ -1,0 +1,74 @@
+# ── Python ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ── Environment / secrets ────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ── Node / Web ───────────────────────────────────────────────────
+web/node_modules/
+web/dist/
+web/build/
+web/.next/
+web/.turbo/
+web/.vite/
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Benchmark outputs (generated) ────────────────────────────────
+bench/results/*.png
+bench/results/*.json
+bench/data/eval.jsonl
+
+# ── Editor / OS ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ── Claude / OMC project state ───────────────────────────────────
+.claude/
+.omc/sessions/
+.omc/state/
+.omc/logs/
+.omc/research/
+
+# ── Hook payload temp files ──────────────────────────────────────
+/tmp/skill-router-*.log
+/tmp/skill-router-*.pid
+
+# ── Misc ─────────────────────────────────────────────────────────
+*.bak
+*.tmp
+.cache/
