@@ -55,7 +55,7 @@ Skillogy ships with two interchangeable backends behind a single `GraphStore` in
 
 | Backend | Set with | Storage | When to use |
 |---|---|---|---|
-| **Kuzu** *(default)* | `SKILLOGY_DB=kuzu` | Embedded `~/.skillogy/graph.kuzu/` directory | OSS / plugin users — zero external deps, single `pip install` |
+| **Kuzu** *(default)* | `SKILLOGY_DB=kuzu` | Embedded `~/.skillogy/graph.kuzu/` directory | OSS / plugin users — zero external deps, single `make install` |
 | **Neo4j** | `SKILLOGY_DB=neo4j` | Server (Docker / Aura) | Large graphs, Neo4j Browser visualisation, production deployments |
 
 Both backends speak the same `GraphStore` API — the rest of the codebase never sees Cypher. The
