@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "skill-router"
+name = "skillogy"
 version = "0.1.0"
-description = "Skill Router - Hackathon project"
+description = "Skillogy — agent-native skill router (Hackathon project)"
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml",
@@ -40,4 +40,4 @@ testpaths = ["tests"]
 markers = ["integration: integration tests requiring docker/neo4j"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/skill_router", "bench"]
+packages = ["src/skillogy", "bench"]

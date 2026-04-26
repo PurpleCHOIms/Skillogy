@@ -15,7 +15,7 @@ from bench.runner import (
     native_top_k,
     sog_top_k,
 )
-from skill_router.domain.types import ParsedSkill
+from skillogy.domain.types import ParsedSkill
 
 
 # ---------------------------------------------------------------------------

@@ -11,12 +11,12 @@ import mcp.types as types
 from mcp.server.lowlevel import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from skill_router.core.router import Router
-from skill_router.infra.scanner import scan_skills
+from skillogy.core.router import Router
+from skillogy.infra.scanner import scan_skills
 
 logger = logging.getLogger(__name__)
 
-server = Server("skill-router")
+server = Server("skillogy")
 
 _router_singleton: Router | None = None
 _skills_cache: list | None = None
@@ -170,7 +170,7 @@ async def _run() -> None:
             read_stream,
             write_stream,
             InitializationOptions(
-                server_name="skill-router",
+                server_name="skillogy",
                 server_version="0.1.0",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),

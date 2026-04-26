@@ -25,8 +25,8 @@ Claude Code hook output schema (verified from docs):
 Non-JSON stdout is also accepted as plain context, but we use the structured
 form so Claude Code can distinguish context from control fields.
 
-Honor SKILL_ROUTER_DISABLE=1 to short-circuit (no injection).
-Honor SKILL_ROUTER_MIN_SCORE (default 1.0) — below this, no injection.
+Honor SKILLOGY_DISABLE=1 to short-circuit (no injection).
+Honor SKILLOGY_MIN_SCORE (default 1.0) — below this, no injection.
 Latency budget: < 500 ms p95.
 """
 
@@ -46,7 +46,7 @@ def _emit_passthrough() -> None:
 
 
 def main() -> int:
-    if os.environ.get("SKILL_ROUTER_DISABLE") == "1":
+    if os.environ.get("SKILLOGY_DISABLE") == "1":
         _emit_passthrough()
         return 0
 
@@ -63,10 +63,10 @@ def main() -> int:
         return 0
 
     # Default 0.4 (was 1.0 — too strict, effectively always passthrough)
-    min_score = float(os.environ.get("SKILL_ROUTER_MIN_SCORE", "0.4"))
+    min_score = float(os.environ.get("SKILLOGY_MIN_SCORE", "0.4"))
 
     # Lazy-import the heavy stuff so a disabled hook stays cheap
-    from skill_router.core.router import Router
+    from skillogy.core.router import Router
 
     try:
         router = Router()
@@ -74,7 +74,7 @@ def main() -> int:
         # LLM re-ranks top-K. load_body=False since we only return the name.
         result = router.find_skill(query=prompt, top_k=3, judge=True, extract=True, load_body=False)
     except Exception as exc:
-        logger.warning("skill-router hook: routing failed (%s) — passthrough.", exc)
+        logger.warning("skillogy hook: routing failed (%s) — passthrough.", exc)
         _emit_passthrough()
         return 0
 
@@ -89,7 +89,7 @@ def main() -> int:
     ]
 
     lines = [
-        f'[skill-router] Relevant skill detected: `{result.skill_name}` (score={result.score:.2f})',
+        f'[skillogy] Relevant skill detected: `{result.skill_name}` (score={result.score:.2f})',
         f'Load it with: Skill({{ skill: "{result.skill_name}" }})',
     ]
     if related_names:

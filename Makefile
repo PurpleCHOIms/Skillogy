@@ -39,7 +39,7 @@ env-check:  ## Verify Python (uv-managed), deps, Docker, LLM creds
 	@printf "── llm credentials ──\n"
 	@if [ -n "$$GOOGLE_API_KEY" ];   then echo "  GOOGLE_API_KEY:    set (len $${#GOOGLE_API_KEY})";  else echo "  GOOGLE_API_KEY:    unset"; fi
 	@if [ -n "$$ANTHROPIC_API_KEY" ]; then echo "  ANTHROPIC_API_KEY: set (len $${#ANTHROPIC_API_KEY})"; else echo "  ANTHROPIC_API_KEY: unset"; fi
-	@if [ -n "$$SKILL_ROUTER_LLM" ];   then echo "  SKILL_ROUTER_LLM:  $$SKILL_ROUTER_LLM (forced)"; fi
+	@if [ -n "$$SKILLOGY_LLM" ];   then echo "  SKILLOGY_LLM:  $$SKILLOGY_LLM (forced)"; fi
 	@$(PYTHON) -c "import claude_agent_sdk; print('  claude-agent-sdk:  importable')" 2>/dev/null || echo "  claude-agent-sdk:  not importable"
 	@$(PYTHON) -c "import google.genai; print('  google-genai:      importable')" 2>/dev/null || echo "  google-genai:      not importable"
 	@printf "\n"
@@ -88,28 +88,28 @@ neo4j-browser:  ## Open Neo4j Browser (user neo4j / pass skillrouter)
 
 .PHONY: index-smoke
 index-smoke: neo4j-up  ## Index 5 SKILL.md (quick smoke, ~$0.03)
-	$(PYTHON) -m skill_router index --limit 5
+	$(PYTHON) -m skillogy index --limit 5
 
 .PHONY: index
 index: neo4j-up  ## Index ALL local SKILL.md (~600+, ~$3, takes minutes)
-	$(PYTHON) -m skill_router index
+	$(PYTHON) -m skillogy index
 
 TESTBED_ROOT ?= $(HOME)/skill-router-testbed/skills
 
 .PHONY: index-testbed
 index-testbed: neo4j-up  ## Index ONLY testbed skills in parallel (set TESTBED_ROOT= to override path)
-	SKILL_ROUTER_EXTRA_ROOTS=$(TESTBED_ROOT) $(PYTHON) -m skill_router index --roots $(TESTBED_ROOT) --workers 8
+	SKILLOGY_EXTRA_ROOTS=$(TESTBED_ROOT) $(PYTHON) -m skillogy index --roots $(TESTBED_ROOT) --workers 8
 
 .PHONY: index-clear
 index-clear:  ## Wipe Neo4j graph
-	@$(PYTHON) -c "from skill_router.core.graph import clear_graph; clear_graph(); print('Graph cleared')"
+	@$(PYTHON) -c "from skillogy.core.graph import clear_graph; clear_graph(); print('Graph cleared')"
 
 # ── Router REPL smoke ──────────────────────────────────────────────
 
 .PHONY: router-smoke
 router-smoke:  ## Single routing query against the live graph
 	@$(PYTHON) -c "\
-from skill_router.core.router import Router;\
+from skillogy.core.router import Router;\
 r=Router();\
 res=r.find_skill('TypeScript 빌드 깨졌어');\
 print('name:', res.skill_name);\
@@ -136,28 +136,28 @@ export HOOK_PAYLOAD_PY
 
 .PHONY: hook-smoke-disabled
 hook-smoke-disabled:  ## Hook in DISABLED mode (no DB/LLM needed)
-	@$(PYTHON) -c "$$HOOK_PAYLOAD_PY" | SKILL_ROUTER_DISABLE=1 $(PYTHON) -m skill_router.adapters.hook
+	@$(PYTHON) -c "$$HOOK_PAYLOAD_PY" | SKILLOGY_DISABLE=1 $(PYTHON) -m skillogy.adapters.hook
 
 .PHONY: hook-smoke
 hook-smoke:  ## Hook real-trigger smoke (Neo4j + creds required)
-	@$(PYTHON) -c "$$HOOK_PAYLOAD_PY" | $(PYTHON) -m skill_router.adapters.hook
+	@$(PYTHON) -c "$$HOOK_PAYLOAD_PY" | $(PYTHON) -m skillogy.adapters.hook
 
 .PHONY: hook-install-snippet
 hook-install-snippet:  ## Print the JSON to merge into ~/.claude/settings.json
 	@printf '\nMerge this into ~/.claude/settings.json (under "hooks"):\n\n'
-	@$(PYTHON) -c "import json; print(json.dumps({'hooks':{'UserPromptSubmit':[{'hooks':[{'type':'command','command':'$(ROOT)/scripts/skill-router-hook.sh'}]}]}}, indent=2))"
+	@$(PYTHON) -c "import json; print(json.dumps({'hooks':{'UserPromptSubmit':[{'hooks':[{'type':'command','command':'$(ROOT)/scripts/skillogy-hook.sh'}]}]}}, indent=2))"
 	@printf "\nThen restart your Claude Code session.\n\n"
 
 # ── MCP server ─────────────────────────────────────────────────────
 
 .PHONY: mcp-smoke
 mcp-smoke:  ## Start MCP server for 3s, ensure no crash
-	@timeout 3 $(PYTHON) -m skill_router.adapters.mcp_server >/dev/null 2>&1; \
+	@timeout 3 $(PYTHON) -m skillogy.adapters.mcp_server >/dev/null 2>&1; \
 	  if [ $$? -eq 124 ]; then echo "  MCP server stayed up for 3s (good)"; else echo "  MCP server exited unexpectedly"; fi
 
 .PHONY: mcp-register
 mcp-register:  ## Register the MCP server in Claude Code
-	claude mcp add skill-router $(PYTHON) -m skill_router.adapters.mcp_server
+	claude mcp add skillogy $(PYTHON) -m skillogy.adapters.mcp_server
 
 .PHONY: mcp-list
 mcp-list:  ## Show registered MCP servers in Claude Code
@@ -167,7 +167,7 @@ mcp-list:  ## Show registered MCP servers in Claude Code
 
 .PHONY: backend
 backend:  ## Run FastAPI backend on :8765 (foreground)
-	$(UVICORN) skill_router.adapters.web_api:app --port 8765 --reload
+	$(UVICORN) skillogy.adapters.web_api:app --port 8765 --reload
 
 .PHONY: frontend
 frontend:  ## Run Vite dev server on :5173 (foreground)
@@ -182,14 +182,14 @@ ui:  ## Start backend + frontend TOGETHER (Ctrl+C stops both)
 	@echo "  (Ctrl+C stops both)"
 	@echo ""
 	@trap 'kill 0 2>/dev/null' INT TERM EXIT; \
-	  ( $(UVICORN) skill_router.adapters.web_api:app --port 8765 --reload 2>&1 | sed -u 's/^/[backend ] /' ) & \
+	  ( $(UVICORN) skillogy.adapters.web_api:app --port 8765 --reload 2>&1 | sed -u 's/^/[backend ] /' ) & \
 	  ( cd web && npm run dev 2>&1 | sed -u 's/^/[frontend] /' ) & \
 	  wait
 
 .PHONY: ui-bg
 ui-bg:  ## Start backend + frontend in background, log to /tmp (use ui-stop to kill)
 	@if [ ! -d web/node_modules ]; then echo "web/node_modules missing — running npm install…"; (cd web && npm install); fi
-	@nohup $(UVICORN) skill_router.adapters.web_api:app --port 8765 --reload > /tmp/skill-router-backend.log 2>&1 & echo $$! > /tmp/skill-router-backend.pid
+	@nohup $(UVICORN) skillogy.adapters.web_api:app --port 8765 --reload > /tmp/skill-router-backend.log 2>&1 & echo $$! > /tmp/skill-router-backend.pid
 	@nohup bash -c 'cd web && npm run dev' > /tmp/skill-router-frontend.log 2>&1 & echo $$! > /tmp/skill-router-frontend.pid
 	@sleep 2
 	@echo "Backend pid=$$(cat /tmp/skill-router-backend.pid)  → http://localhost:8765   logs: /tmp/skill-router-backend.log"
@@ -201,7 +201,7 @@ ui-bg:  ## Start backend + frontend in background, log to /tmp (use ui-stop to k
 ui-stop:  ## Kill the background backend + frontend started by ui-bg
 	@-[ -f /tmp/skill-router-backend.pid  ] && kill $$(cat /tmp/skill-router-backend.pid)  2>/dev/null && rm /tmp/skill-router-backend.pid  && echo "backend stopped"  || echo "backend not running"
 	@-[ -f /tmp/skill-router-frontend.pid ] && kill $$(cat /tmp/skill-router-frontend.pid) 2>/dev/null && rm /tmp/skill-router-frontend.pid && echo "frontend stopped" || echo "frontend not running"
-	@-pkill -f "uvicorn skill_router.adapters.web_api" 2>/dev/null
+	@-pkill -f "uvicorn skillogy.adapters.web_api" 2>/dev/null
 	@-pkill -f "vite" 2>/dev/null
 	@true
 
@@ -262,17 +262,39 @@ bench-sog-only:  ## Run only the SOG condition (fast)
 
 .PHONY: eval-set-testbed
 eval-set-testbed:  ## Generate eval set from testbed skills only
-	SKILL_ROUTER_EXTRA_ROOTS=$(TESTBED_ROOT) $(PYTHON) -m bench eval-set \
+	SKILLOGY_EXTRA_ROOTS=$(TESTBED_ROOT) $(PYTHON) -m bench eval-set \
 	  --out bench/data/eval-testbed.jsonl \
 	  --n-skills 29 \
 	  --roots $(TESTBED_ROOT)
 
-.PHONY: bench-claude
-bench-claude:  ## Run claude_native vs claude_hook benchmark (real Claude Code CLI)
-	$(PYTHON) -m bench run \
+define _bench_claude_one
+	@TS=$$(date +%Y%m%d_%H%M%S); \
+	OUT=bench/results/_tmp_$(1); \
+	rm -rf $$OUT; mkdir -p $$OUT; \
+	BENCH_CLAUDE_MODEL=$(1) $(PYTHON) -m bench run \
 	  --eval bench/data/eval-testbed.jsonl \
-	  --out-dir bench/results \
-	  --conditions claude_native,claude_hook
+	  --out-dir $$OUT \
+	  --conditions claude_native,claude_hook && \
+	mv $$OUT/results.json bench/results/$(1)_$${TS}_results.json && \
+	mv $$OUT/summary.json bench/results/$(1)_$${TS}_summary.json && \
+	rmdir $$OUT && \
+	echo "→ bench/results/$(1)_$${TS}_summary.json"
+endef
+
+.PHONY: bench-claude-haiku
+bench-claude-haiku:  ## Bench with Claude Haiku model → {haiku}_{timestamp}_*.json
+	$(call _bench_claude_one,haiku)
+
+.PHONY: bench-claude-sonnet
+bench-claude-sonnet:  ## Bench with Claude Sonnet model → {sonnet}_{timestamp}_*.json
+	$(call _bench_claude_one,sonnet)
+
+.PHONY: bench-claude-opus
+bench-claude-opus:  ## Bench with Claude Opus model → {opus}_{timestamp}_*.json
+	$(call _bench_claude_one,opus)
+
+.PHONY: bench-claude-all
+bench-claude-all: bench-claude-haiku bench-claude-sonnet bench-claude-opus  ## Run all three models sequentially
 
 .PHONY: charts
 charts:  ## Generate matplotlib PNG charts

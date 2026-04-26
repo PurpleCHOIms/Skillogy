@@ -1,4 +1,4 @@
-"""Tests for skill_router.core.graph — Neo4j-backed implementation.
+"""Tests for skillogy.core.graph — Neo4j-backed implementation.
 
 Unit tests use a FakeDriver that records executed Cypher + params and returns
 canned results. Integration tests (marked @pytest.mark.integration) require a
@@ -14,14 +14,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from skill_router.core.graph import (
+from skillogy.core.graph import (
     build_graph,
     clear_graph,
     enrich_with_parsed,
     export_graph_json,
     init_schema,
 )
-from skill_router.domain.types import ParsedSkill, Signal, TriggerSurface
+from skillogy.domain.types import ParsedSkill, Signal, TriggerSurface
 
 
 # ---------------------------------------------------------------------------

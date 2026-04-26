@@ -1,4 +1,4 @@
-"""python -m skill_router index [--limit N] [--workers N] [--roots PATH ...]
+"""python -m skillogy index [--limit N] [--workers N] [--roots PATH ...]
 
 Runs scanner -> extractor -> init_schema -> build_graph(clear_first=True) -> enrich_with_parsed.
 LLM extraction runs in parallel (default 5 workers) since calls are I/O-bound.
@@ -16,11 +16,11 @@ from pathlib import Path
 def cmd_index(args: argparse.Namespace) -> None:
     logging.basicConfig(level=logging.INFO)
 
-    from skill_router.infra.llm import get_llm_client  # noqa: PLC0415
-    from skill_router.infra.db import close_driver, get_driver  # noqa: PLC0415
-    from skill_router.core.extractor import extract  # noqa: PLC0415
-    from skill_router.core.graph import build_graph, enrich_with_parsed, init_schema  # noqa: PLC0415
-    from skill_router.infra.scanner import scan_skills  # noqa: PLC0415
+    from skillogy.infra.llm import get_llm_client  # noqa: PLC0415
+    from skillogy.infra.db import close_driver, get_driver  # noqa: PLC0415
+    from skillogy.core.extractor import extract  # noqa: PLC0415
+    from skillogy.core.graph import build_graph, enrich_with_parsed, init_schema  # noqa: PLC0415
+    from skillogy.infra.scanner import scan_skills  # noqa: PLC0415
 
     roots = [Path(r) for r in args.roots] if args.roots else None
     parsed_skills = scan_skills(roots=roots)
@@ -64,7 +64,7 @@ def cmd_index(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(prog="skill_router")
+    ap = argparse.ArgumentParser(prog="skillogy")
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("index")
     p.add_argument("--limit", type=int, default=None)

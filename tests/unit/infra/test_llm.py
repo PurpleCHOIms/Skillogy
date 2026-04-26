@@ -1,4 +1,4 @@
-"""Tests for skill_router.infra.llm — no real API calls made."""
+"""Tests for skillogy.infra.llm — no real API calls made."""
 
 import importlib
 import sys
@@ -13,8 +13,8 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def _reload_auth():
-    """Force a fresh import of skill_router.infra.llm so monkeypatches take effect."""
-    import skill_router.infra.llm as auth_mod
+    """Force a fresh import of skillogy.infra.llm so monkeypatches take effect."""
+    import skillogy.infra.llm as auth_mod
     importlib.reload(auth_mod)
     return auth_mod
 
@@ -24,7 +24,7 @@ def _reload_auth():
 # ---------------------------------------------------------------------------
 
 def test_sdk_path(monkeypatch):
-    """When claude_agent_sdk is importable and SKILL_ROUTER_FORCE_API_KEY is unset,
+    """When claude_agent_sdk is importable and SKILLOGY_FORCE_API_KEY is unset,
     get_llm_client() must return an _SDKClient and complete() must surface text from
     the SDK's query() async iterator."""
 
@@ -56,7 +56,7 @@ def test_sdk_path(monkeypatch):
     fake_sdk.query = _fake_query
 
     monkeypatch.setitem(sys.modules, "claude_agent_sdk", fake_sdk)
-    monkeypatch.delenv("SKILL_ROUTER_FORCE_API_KEY", raising=False)
+    monkeypatch.delenv("SKILLOGY_FORCE_API_KEY", raising=False)
 
     auth = _reload_auth()
 
@@ -98,7 +98,7 @@ def test_env_path(monkeypatch):
     monkeypatch.setattr(importlib, "import_module", fake_import)
 
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
-    monkeypatch.delenv("SKILL_ROUTER_FORCE_API_KEY", raising=False)
+    monkeypatch.delenv("SKILLOGY_FORCE_API_KEY", raising=False)
 
     # Mock the Anthropic constructor so no real client is built
     mock_anthropic_instance = MagicMock()
@@ -133,7 +133,7 @@ def test_no_creds_raises(monkeypatch):
     monkeypatch.setattr(importlib, "import_module", fake_import)
 
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("SKILL_ROUTER_FORCE_API_KEY", raising=False)
+    monkeypatch.delenv("SKILLOGY_FORCE_API_KEY", raising=False)
 
     auth = _reload_auth()
 

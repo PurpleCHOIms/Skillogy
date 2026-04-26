@@ -13,8 +13,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from skill_router.infra.llm import LLMClient
-from skill_router.domain.types import ParsedSkill, Signal, TriggerSurface
+from skillogy.infra.llm import LLMClient
+from skillogy.domain.types import ParsedSkill, Signal, TriggerSurface
 
 logger = logging.getLogger(__name__)
 
@@ -261,8 +261,8 @@ if __name__ == "__main__":
     import sys
     import dataclasses
 
-    from skill_router.infra.llm import get_llm_client
-    from skill_router.infra.scanner import parse_skill_md
+    from skillogy.infra.llm import get_llm_client
+    from skillogy.infra.scanner import parse_skill_md
 
     parsed = parse_skill_md(Path(sys.argv[1]))
     if parsed is None:

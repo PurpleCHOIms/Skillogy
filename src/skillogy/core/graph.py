@@ -1,4 +1,4 @@
-"""Graph builder and persistence for skill_router — Neo4j 5 backend.
+"""Graph builder and persistence for skillogy — Neo4j 5 backend.
 
 Models the TRIGGER SURFACE of each skill. Nodes: Skill, Intent, Signal.
 Edges: TRIGGERED_BY (positive trigger), EXCLUDED_BY (negative trigger).
@@ -10,8 +10,8 @@ from typing import Any
 
 from neo4j import Driver, RoutingControl
 
-from skill_router.infra.db import get_driver
-from skill_router.domain.types import TriggerSurface, ParsedSkill
+from skillogy.infra.db import get_driver
+from skillogy.domain.types import TriggerSurface, ParsedSkill
 
 # ---------------------------------------------------------------------------
 # Schema

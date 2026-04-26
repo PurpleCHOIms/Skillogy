@@ -18,7 +18,7 @@ from pathlib import Path
 
 import yaml
 
-from skill_router.domain.types import ParsedSkill
+from skillogy.domain.types import ParsedSkill
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def default_roots() -> list[Path]:
       - ~/.claude/plugins/         -> "plugin"
       - ~/.claude/skills/          -> "user"
       - <project>/.claude/skills/  -> "project"  (auto-discovered from Claude registry)
-      - SKILL_ROUTER_EXTRA_ROOTS   -> "project"  (colon-separated env var, isolated from Claude Code)
+      - SKILLOGY_EXTRA_ROOTS   -> "project"  (colon-separated env var, isolated from Claude Code)
     """
     import os  # noqa: PLC0415
     user_skills = Path.home() / ".claude" / "skills"
@@ -38,7 +38,7 @@ def default_roots() -> list[Path]:
     candidates = [user_skills, user_plugins]
     candidates.extend(_discover_project_roots())
 
-    extra_env = os.environ.get("SKILL_ROUTER_EXTRA_ROOTS", "")
+    extra_env = os.environ.get("SKILLOGY_EXTRA_ROOTS", "")
     for raw in extra_env.split(":"):
         raw = raw.strip()
         if raw:
@@ -104,10 +104,10 @@ def _discover_project_roots() -> list[Path]:
 
 
 def _extra_project_roots() -> set[Path]:
-    """Return resolved paths from SKILL_ROUTER_EXTRA_ROOTS env var."""
+    """Return resolved paths from SKILLOGY_EXTRA_ROOTS env var."""
     import os  # noqa: PLC0415
     roots: set[Path] = set()
-    for raw in os.environ.get("SKILL_ROUTER_EXTRA_ROOTS", "").split(":"):
+    for raw in os.environ.get("SKILLOGY_EXTRA_ROOTS", "").split(":"):
         raw = raw.strip()
         if raw:
             p = Path(raw).expanduser().resolve()
@@ -124,7 +124,7 @@ def scope_for_path(path: Path, extra_project_roots: set[Path] | None = None) -> 
     resolved_str = str(path.resolve())
     home = str(Path.home().resolve())
 
-    # Paths inside SKILL_ROUTER_EXTRA_ROOTS are always "project" — check unresolved path first
+    # Paths inside SKILLOGY_EXTRA_ROOTS are always "project" — check unresolved path first
     if extra_project_roots:
         for root in extra_project_roots:
             root_s = str(root)

@@ -1,4 +1,4 @@
-"""Shared dataclasses for skill_router."""
+"""Shared dataclasses for skillogy."""
 
 from __future__ import annotations
 

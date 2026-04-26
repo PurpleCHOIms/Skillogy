@@ -1,4 +1,4 @@
-"""Tests for skill_router.core.extractor — no real API calls made."""
+"""Tests for skillogy.core.extractor — no real API calls made."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from skill_router.core.extractor import extract
-from skill_router.domain.types import ParsedSkill, Signal, TriggerSurface
+from skillogy.core.extractor import extract
+from skillogy.domain.types import ParsedSkill, Signal, TriggerSurface
 
 
 # ---------------------------------------------------------------------------
@@ -310,8 +310,8 @@ def test_smoke_real_sample() -> None:
     if not has_api_key and not has_sdk:
         pytest.skip("No LLM credentials available (ANTHROPIC_API_KEY unset and claude_agent_sdk not importable)")
 
-    from skill_router.infra.llm import get_llm_client
-    from skill_router.infra.scanner import scan_skills
+    from skillogy.infra.llm import get_llm_client
+    from skillogy.infra.scanner import scan_skills
 
     skills_dir = Path.home() / ".claude" / "skills"
     if not skills_dir.exists():

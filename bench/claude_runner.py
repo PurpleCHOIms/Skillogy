@@ -1,7 +1,7 @@
 """Runs real Claude Code CLI to measure skill trigger rate.
 
 Two conditions:
-  claude_native  — real Claude Code, SKILL_ROUTER_DISABLE=1, no hook
+  claude_native  — real Claude Code, SKILLOGY_DISABLE=1, no hook
   claude_hook    — real Claude Code, hook injected via --settings (our service active)
 
 Detection strategy (in priority order):
@@ -21,6 +21,12 @@ from pathlib import Path
 
 CLAUDE_BIN = os.environ.get("CLAUDE_BIN", "claude")
 DEFAULT_TIMEOUT = int(os.environ.get("BENCH_CLAUDE_TIMEOUT", "60"))
+# Model alias: haiku | sonnet | opus | <full-id>; empty → CLI default
+CLAUDE_MODEL = os.environ.get("BENCH_CLAUDE_MODEL", "")
+
+
+def _model_args() -> list[str]:
+    return ["--model", CLAUDE_MODEL] if CLAUDE_MODEL else []
 
 
 def _load_dotenv() -> dict[str, str]:
@@ -39,8 +45,13 @@ def _load_dotenv() -> dict[str, str]:
 
 
 _DOTENV = _load_dotenv()
-# Both conditions cwd here so testbed skills are visible (project-level skills)
-BENCH_CWD = os.environ.get("BENCH_CWD", str(Path.home() / "skill-router-testbed"))
+# Two cwd's: same skill set, only difference is project-level hook registration
+BENCH_NATIVE_CWD = os.environ.get(
+    "BENCH_NATIVE_CWD", str(Path.home() / "skill-router-testbed"),
+)
+BENCH_HOOK_CWD = os.environ.get(
+    "BENCH_HOOK_CWD", str(Path.home() / "skill-router-testbed-hook"),
+)
 
 # Disable all user-level plugins (OMC etc.) so SessionStart hooks don't slow runs.
 _DISABLED_PLUGINS = {
@@ -75,21 +86,22 @@ def run_claude_query(
         "error": str | None,    # exception message if subprocess failed
       }
     """
-    settings = json.dumps({**_DISABLED_PLUGINS, "hooks": {"UserPromptSubmit": []}})
-    env = {**os.environ, **_DOTENV}
-    env["SKILL_ROUTER_DISABLE"] = "1"  # double-safety: suppress hook even if it somehow fires
+    settings = json.dumps(_DISABLED_PLUGINS)
+    env = dict(os.environ)
+    env.pop("ANTHROPIC_API_KEY", None)  # force OAuth (claude.ai), not API key (no balance)
+    env["SKILLOGY_DISABLE"] = "1"  # safety: testbed has no hook, but extra guard
     return _stream_until_skill(
         [
-            CLAUDE_BIN, "--settings", settings,
+            CLAUDE_BIN, *_model_args(), "--settings", settings,
             "--print", "--verbose", "--output-format", "stream-json", query,
         ],
         env=env,
-        cwd=BENCH_CWD,
+        cwd=BENCH_NATIVE_CWD,
         timeout=timeout,
     )
 
 
-_HOOK_SCRIPT = str(Path(__file__).parent.parent / "scripts" / "skill-router-hook.sh")
+_HOOK_SCRIPT = str(Path(__file__).parent.parent / "scripts" / "skillogy-hook.sh")
 
 
 def run_claude_query_with_hook(
@@ -101,23 +113,17 @@ def run_claude_query_with_hook(
     The hook fires on UserPromptSubmit, injects skill hint as additionalContext.
     We then detect if Claude called the right Skill tool.
     """
-    settings = json.dumps({
-        **_DISABLED_PLUGINS,
-        "hooks": {
-            "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": _HOOK_SCRIPT}]}
-            ]
-        },
-    })
-    env = {**os.environ, **_DOTENV}
-    env.pop("SKILL_ROUTER_DISABLE", None)  # ensure hook is NOT suppressed
+    settings = json.dumps(_DISABLED_PLUGINS)
+    env = dict(os.environ)
+    env.pop("ANTHROPIC_API_KEY", None)  # force OAuth (claude.ai), not API key (no balance)
+    env.pop("SKILLOGY_DISABLE", None)  # ensure hook is NOT suppressed
     return _stream_until_skill(
         [
-            CLAUDE_BIN, "--settings", settings,
+            CLAUDE_BIN, *_model_args(), "--settings", settings,
             "--print", "--verbose", "--output-format", "stream-json", query,
         ],
         env=env,
-        cwd=BENCH_CWD,
+        cwd=BENCH_HOOK_CWD,
         timeout=timeout,
     )
 
@@ -327,7 +333,7 @@ def run_hook_directly(query: str) -> tuple[str, float]:
     start = time.perf_counter()
     try:
         proc = subprocess.run(
-            [sys.executable, "-m", "skill_router.adapters.hook"],
+            [sys.executable, "-m", "skillogy.adapters.hook"],
             input=payload,
             capture_output=True,
             text=True,

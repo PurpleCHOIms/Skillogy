@@ -13,8 +13,8 @@ import logging
 import random
 from pathlib import Path
 
-from skill_router.infra.llm import LLMClient, get_llm_client
-from skill_router.infra.scanner import ParsedSkill, scan_skills
+from skillogy.infra.llm import LLMClient, get_llm_client
+from skillogy.infra.scanner import ParsedSkill, scan_skills
 
 logger = logging.getLogger(__name__)
 

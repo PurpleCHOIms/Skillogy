@@ -10,9 +10,9 @@ from pathlib import Path
 
 from neo4j import Driver, RoutingControl
 
-from skill_router.infra.llm import LLMClient, get_llm_client
-from skill_router.infra.db import get_driver
-from skill_router.domain.types import Signal
+from skillogy.infra.llm import LLMClient, get_llm_client
+from skillogy.infra.db import get_driver
+from skillogy.domain.types import Signal
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ Return ONLY the JSON object, no preamble."""
 
 
 # Cypher for fetching RELATES_TO companion skills
-# SKILL_ROUTER_RELATES_K env var controls the limit (default 3)
+# SKILLOGY_RELATES_K env var controls the limit (default 3)
 _RELATED_NEIGHBORS_CYPHER = """
 MATCH (s:Skill {name: $name})-[:RELATES_TO]->(t:Skill)
 WHERE NOT t.name IN $exclude
@@ -131,7 +131,7 @@ class Router:
             if r["name"] != winner_name
         ]
 
-        relates_k = int(os.environ.get("SKILL_ROUTER_RELATES_K", "3"))
+        relates_k = int(os.environ.get("SKILLOGY_RELATES_K", "3"))
         exclude: set[str] = {winner_name} | {a["name"] for a in alternatives if a.get("name")}
         related = self._fetch_related(winner_name, exclude, relates_k)
         alternatives = list(alternatives) + related

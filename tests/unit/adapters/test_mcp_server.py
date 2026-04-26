@@ -1,4 +1,4 @@
-"""Unit tests for skill_router.adapters.mcp_server.
+"""Unit tests for skillogy.adapters.mcp_server.
 
 Tests invoke the internal async handler functions directly, mocking Router and
 scan_skills so no Neo4j or LLM is needed.
@@ -16,8 +16,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from skill_router.core.router import RoutingResult
-from skill_router.domain.types import ParsedSkill
+from skillogy.core.router import RoutingResult
+from skillogy.domain.types import ParsedSkill
 from pathlib import Path
 
 
@@ -51,7 +51,7 @@ def _make_parsed_skill(name: str, description: str = "") -> ParsedSkill:
 # Grab the handler functions from the module after import
 # ---------------------------------------------------------------------------
 
-import skill_router.adapters.mcp_server as mcp_mod
+import skillogy.adapters.mcp_server as mcp_mod
 
 
 # ---------------------------------------------------------------------------
@@ -158,7 +158,7 @@ def test_mcp_server_subprocess_lists_tools():
     import threading
 
     proc = subprocess.Popen(
-        [sys.executable, "-m", "skill_router.adapters.mcp_server"],
+        [sys.executable, "-m", "skillogy.adapters.mcp_server"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

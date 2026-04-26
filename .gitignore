@@ -62,7 +62,9 @@ Thumbs.db
 .omc/sessions/
 .omc/state/
 .omc/logs/
-.omc/research/
+.omc/
+presentation/
+research/
 
 # ── Hook payload temp files ──────────────────────────────────────
 /tmp/skill-router-*.log

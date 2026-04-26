@@ -1,131 +1,158 @@
-# Skill Router
+# Skillogy
 
-Hackathon project: a skill routing system for Claude Code skills.
+> **Why don't agents use skills properly?**
+>
+> You wrote a SKILL.md. The agent ignored it. You wrote a longer description. It still ignored it.
+> The problem isn't your skill — it's that LLMs scan a flat list of skill descriptions and only
+> trigger when the user prompt happens to phrase things the same way the description does.
+>
+> Skillogy fixes this with a **GraphRAG router** that sits in front of Claude Code (or any
+> agent) and tells it which skill to load — based on the *meaning* of the request, not the surface words.
 
-## Project layout
+---
+
+## What it does
+
+Skillogy turns your scattered `SKILL.md` files into a **typed knowledge graph** in Neo4j, then
+uses an LLM to extract intent + signals from each user prompt and traverse the graph to find the
+most relevant skill. The chosen skill name is injected into Claude Code as `additionalContext`
+via a `UserPromptSubmit` hook, so Claude Code calls the right `Skill` tool autonomously.
 
 ```
-Hackathon/
-├── pyproject.toml
-├── src/
-│   └── skill_router/
-│       ├── __init__.py
-│       ├── __main__.py          # python -m skill_router index
-│       ├── domain/
-│       │   ├── types.py         # ParsedSkill, ExtractedSkill, Signal dataclasses
-│       │   └── graph_schema.py  # Node label + relationship constants
-│       ├── infra/
-│       │   ├── db.py            # Neo4j driver singleton
-│       │   ├── scanner.py       # SKILL.md discovery
-│       │   └── llm.py           # LLM client (claude-agent-sdk or anthropic SDK)
-│       ├── core/
-│       │   ├── extractor.py     # ParsedSkill -> ExtractedSkill via LLM
-│       │   ├── graph.py         # Neo4j graph build/enrich/export
-│       │   └── router.py        # GraphRAG routing engine
-│       └── adapters/
-│           └── web_api.py       # FastAPI app
-├── bench/
-│   ├── __main__.py              # python -m bench eval-set
-│   ├── eval_set.py              # Eval JSONL generation (MetaTool + personal skills)
-│   └── data/                   # Cached/generated benchmark data
-├── tests/
-│   ├── unit/
-│   │   ├── infra/               # test_llm.py, test_scanner.py
-│   │   ├── core/                # test_extractor.py, test_graph.py, test_router.py
-│   │   └── bench/               # test_eval_set.py
-│   └── integration/             # testcontainers-based tests (NEO4J_INTEGRATION=1)
-├── web/                         # Vite + React frontend
-└── scripts/                     # Hook scripts (US-007)
+user prompt  →  hook  →  LLM extract  →  Neo4j graph  →  LLM judge  →  skill hint  →  Claude Code
 ```
 
-## Neo4j (graph DB backend)
+No API keys required. The hook reuses Claude Code's existing OAuth session via `claude-agent-sdk`.
 
-Start Neo4j locally:
-
-    docker compose up -d neo4j
-
-Browser: http://localhost:7474 (neo4j / skillrouter)
-
-Index your local SKILL.md ecosystem into the graph:
-
-    .venv/bin/python -m skill_router index
-
-Run integration tests (requires Docker):
-
-    NEO4J_INTEGRATION=1 .venv/bin/pytest -m integration -v
+---
 
 ## Benchmark
 
-Generate the eval JSONL dataset:
+29 testbed skills. 29 natural-language queries. Same skill catalog, same Claude Code CLI
+(`claude --print`). Only difference: whether our `UserPromptSubmit` hook is active.
 
-    .venv/bin/python -m bench eval-set --out bench/data/eval.jsonl
+| Model | Native (no hook) | With Skillogy hook | Improvement |
+|---|---|---|---|
+| **Claude Haiku 4.5** | 20.7 % | **62.1 %** | +41.4 pp |
+| **Claude Sonnet 4.6** | 48.3 % | **100.0 %** | +51.7 pp |
+| **Claude Opus 4.7** | 69.0 % | **96.6 %** | +27.6 pp |
 
-## Web UI
+`p95` latency added by the hook is < 10 s on average. Detection criterion: Claude Code emits
+the correct `Skill({skill: "..."})` tool call within 60 s.
 
-Browse and search all installed skills via a local web interface.
+Reproduce: `make bench-claude-all` (writes `bench/results/{model}_{timestamp}_summary.json`).
 
-### Backend (FastAPI)
+---
 
-```bash
-.venv/bin/uvicorn skill_router.adapters.web_api:app --port 8765
+## Architecture
+
+### Graph schema (Neo4j)
+
+```
+(:Skill {name, description, scope, source_path})
+(:Intent {label})        -- e.g. "build a rag system"
+(:Signal {kind, value})  -- kind ∈ {keyword, file_ext, tool_name, error_pattern, pattern}
+
+(s:Skill)-[:TRIGGERED_BY]->(n:Intent | Signal)   -- this signal activates the skill
+(s:Skill)-[:EXCLUDED_BY]->(n:Signal)             -- this signal blocks the skill
+(s:Skill)-[:RELATES_TO]->(t:Skill)               -- companion skills (soft boost)
 ```
 
-### Frontend (Vite + React)
+### Routing pipeline
 
+1. **Indexing (offline)** — every `SKILL.md` is parsed, then an LLM extracts `{intents, signals,
+   exclusions, related_skills}` and writes nodes/edges to Neo4j.
+2. **Extract (per query)** — LLM converts the raw prompt into intent labels + signal candidates.
+3. **Graph traversal** — a single Cypher query scores skills by matched edges (Intent = +2,
+   Signal = +1) while filtering out skills with active `EXCLUDED_BY` signals.
+4. **LLM judge** — top-K is reranked with one final LLM call to disambiguate near-ties.
+5. **RELATES_TO boost** — neighbors of the top-1 are surfaced as companion skills.
+6. **Hook output** — `additionalContext` is emitted as `Skill({skill: "name"})`. Claude Code
+   then calls the tool natively, with no further intervention.
+
+---
+
+## Quickstart
+
+### Prerequisites
+- Python 3.11+
+- Docker (for Neo4j)
+- Claude Code CLI (logged in)
+- `uv` (or pip)
+
+### Install
 ```bash
-# separate terminal
-cd web && npm run dev
-# opens http://localhost:5173
+git clone https://github.com/PurpleCHOIms/Skillogy.git
+cd Skillogy
+make install                        # uv venv + dev deps
+cp .env.example .env                # fill in NEO4J_PASSWORD if not default
 ```
 
-### API Endpoints
+### Index your skills
+```bash
+make neo4j-up                       # start Neo4j on :7474 / :7687
+make index-testbed                  # or `make index` for ALL local SKILL.md
+```
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/skills` | List all skills `[{name, description}]` |
-| `GET /api/skills/{name}` | Full skill detail (body, source_path, raw_frontmatter) |
-| `GET /api/graph` | Skill dependency graph from Neo4j |
+### Wire the hook into Claude Code
+The repo ships a project-level hook for the testbed. To enable it globally, add to
+`~/.claude/settings.json`:
 
-## MCP server (cross-agent surface)
-
-Other MCP-aware agents (Cursor, Codex, Gemini CLI, etc.) can use the router as a tool.
-For Claude Code, register it via:
-
-    claude mcp add skill-router /home/catow/GIT/Hackathon/.venv/bin/python -m skill_router.adapters.mcp_server
-
-The server exposes:
-- `find_skill(query, top_k=5)` — returns the most relevant SKILL.md body for a query
-- `list_skills(filter="")` — lists all scanned skills (debugging / discovery)
-
-Requires Neo4j running and an indexed graph.
-
-## Install the Claude Code hook
-
-Add this to `~/.claude/settings.json` to activate strict-trigger on every prompt:
-
-    {
-      "hooks": {
-        "UserPromptSubmit": [
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
           {
-            "matcher": "",
-            "hooks": [
-              {
-                "type": "command",
-                "command": "/home/catow/GIT/Hackathon/scripts/skill-router-hook.sh",
-                "timeout": 10,
-                "statusMessage": "Routing skill..."
-              }
-            ]
+            "type": "command",
+            "command": "/absolute/path/to/Skillogy/scripts/skillogy-hook.sh"
           }
         ]
       }
-    }
+    ]
+  }
+}
+```
 
-(Adjust the path if you cloned elsewhere; honors `SKILL_ROUTER_ROOT` env var.)
+Restart Claude Code. From now on, every prompt is routed through Skillogy before it reaches the model.
 
-Disable temporarily with `export SKILL_ROUTER_DISABLE=1`.
-Tune match threshold with `export SKILL_ROUTER_MIN_SCORE=2.0`.
-Limit companion suggestions from RELATES_TO edges with `export SKILL_ROUTER_RELATES_K=3` (default 3; set to 0 to disable).
+### Try the web UI (optional)
+```bash
+make ui                             # backend :8765 + frontend :5173
+```
+Browse the graph, filter by project/scope, click a skill to see its trigger surface.
 
-Requires Neo4j running (`docker compose up -d neo4j`) and an indexed graph
-(`uv run python -m skill_router index`).
+---
+
+## Configuration
+
+| Env var | Purpose | Default |
+|---|---|---|
+| `SKILLOGY_DISABLE` | Bypass the hook (passthrough) | unset |
+| `SKILLOGY_MIN_SCORE` | Minimum router score to inject hint | `0.4` |
+| `SKILLOGY_RELATES_K` | Companion skills surfaced via RELATES_TO | `3` |
+| `SKILLOGY_LLM` | `sdk` \| `gemini` \| `api` | `sdk` (OAuth) |
+| `SKILLOGY_EXTRA_ROOTS` | Colon-separated extra skill dirs | unset |
+| `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Neo4j connection | localhost defaults |
+
+---
+
+## What's next
+
+- [ ] Package as a Claude Code plugin (currently installed manually as a hook)
+- [ ] Vector embedding fallback for cold-start projects
+- [ ] Built-in `RELATES_TO` learning from co-invocation traces
+- [ ] MCP server expansion (currently exposes `find_skill` and `list_skills`)
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+## Project status
+
+Hackathon prototype, actively maintained. Issues and PRs welcome.

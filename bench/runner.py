@@ -11,8 +11,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
-from skill_router.infra.llm import LLMClient, get_llm_client
-from skill_router.infra.scanner import ParsedSkill, scan_skills
+from skillogy.infra.llm import LLMClient, get_llm_client
+from skillogy.infra.scanner import ParsedSkill, scan_skills
 
 logger = logging.getLogger(__name__)
 
@@ -248,7 +248,7 @@ def run_bench(
                 logger.warning("Vector index unavailable (%s); skipping condition", exc)
                 continue
         if cond == "sog" and router is None and use_real_router:
-            from skill_router.core.router import Router
+            from skillogy.core.router import Router
 
             router = Router(llm=llm)
 
@@ -262,7 +262,7 @@ def run_bench(
 
         n_entries = len(eval_entries)
         # Both claude_* conditions run full Claude Code CLI — rate-limit to avoid overload
-        _WORKERS = {"claude_hook": 10, "claude_native": 10}
+        _WORKERS = {"claude_hook": 3, "claude_native": 5}
         workers = _WORKERS.get(cond, 1)
         print(f"\n[{cond}] Starting {n_entries} queries (workers={workers})...", flush=True)
 

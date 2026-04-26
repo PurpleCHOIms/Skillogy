@@ -47,7 +47,7 @@ def main() -> None:
     if args.cmd == "eval-set":
         skills = None
         if getattr(args, "roots", None):
-            from skill_router.infra.scanner import scan_skills
+            from skillogy.infra.scanner import scan_skills
             skills = scan_skills(roots=[Path(r) for r in args.roots])
         counts = build_eval_set(Path(args.out), n_skills=args.n_skills, seed=args.seed, skills=skills)
         print(counts)

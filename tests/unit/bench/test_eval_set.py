@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from bench.eval_set import _normalize_skill_name, build_eval_set
-from skill_router.domain.types import ParsedSkill
+from skillogy.domain.types import ParsedSkill
 
 
 # ---------------------------------------------------------------------------

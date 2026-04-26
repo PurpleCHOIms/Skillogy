@@ -1,11 +1,11 @@
-"""Tests for skill_router.infra.scanner and skill_router.domain.types."""
+"""Tests for skillogy.infra.scanner and skillogy.domain.types."""
 
 from pathlib import Path
 
 import pytest
 
-from skill_router.infra.scanner import default_roots, parse_skill_md, scan_skills
-from skill_router.domain.types import ParsedSkill
+from skillogy.infra.scanner import default_roots, parse_skill_md, scan_skills
+from skillogy.domain.types import ParsedSkill
 
 
 # ---------------------------------------------------------------------------

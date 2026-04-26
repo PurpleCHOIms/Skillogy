@@ -1,11 +1,11 @@
 """LLM client provider with multi-provider auth.
 
 Supported backends (auto-detected):
-  1. Google Gemini   — when GOOGLE_API_KEY is set OR SKILL_ROUTER_LLM=gemini
+  1. Google Gemini   — when GOOGLE_API_KEY is set OR SKILLOGY_LLM=gemini
   2. Claude Agent SDK — when claude-agent-sdk is importable (inherits Claude Code auth)
   3. Anthropic API   — when ANTHROPIC_API_KEY is set
 
-Override via SKILL_ROUTER_LLM env var: "gemini" | "sdk" | "api".
+Override via SKILLOGY_LLM env var: "gemini" | "sdk" | "api".
 
 Provider selection notes:
 - Gemini path uses google-genai client.models.generate_content with system_instruction.
@@ -25,10 +25,10 @@ _MODEL_ALIASES = {
 
 # Default Gemini model — `gemini-pro-latest` is an alias that always tracks the
 # strongest Pro release (currently Gemini 3.1 Pro as of 2026-04-26). Override via env:
-#   SKILL_ROUTER_GEMINI_MODEL=gemini-flash-latest          (cheap/fast alias)
-#   SKILL_ROUTER_GEMINI_MODEL=gemini-flash-lite-latest     (cheapest alias)
-#   SKILL_ROUTER_GEMINI_MODEL=gemini-3.1-pro-preview       (explicit pin)
-_DEFAULT_GEMINI_MODEL = os.environ.get("SKILL_ROUTER_GEMINI_MODEL", "gemini-pro-latest")
+#   SKILLOGY_GEMINI_MODEL=gemini-flash-latest          (cheap/fast alias)
+#   SKILLOGY_GEMINI_MODEL=gemini-flash-lite-latest     (cheapest alias)
+#   SKILLOGY_GEMINI_MODEL=gemini-3.1-pro-preview       (explicit pin)
+_DEFAULT_GEMINI_MODEL = os.environ.get("SKILLOGY_GEMINI_MODEL", "gemini-pro-latest")
 
 
 def _normalize_model(model: str) -> str:
@@ -69,7 +69,7 @@ class _SDKClient(LLMClient):
 
     Wraps the async `query()` API in a synchronous `complete()` call by running
     a fresh anyio event loop per call. For high-throughput indexing prefer the
-    direct anthropic-SDK path (set SKILL_ROUTER_FORCE_API_KEY=1).
+    direct anthropic-SDK path (set SKILLOGY_FORCE_API_KEY=1).
     """
 
     def __init__(self, model: str) -> None:
@@ -188,27 +188,27 @@ def get_llm_client(model: str = "claude-haiku-4-5") -> LLMClient:
     """Return an LLMClient using the best available auth method.
 
     Priority:
-    1. SKILL_ROUTER_LLM env var — explicit provider override ("gemini" | "sdk" | "api")
+    1. SKILLOGY_LLM env var — explicit provider override ("gemini" | "sdk" | "api")
     2. GOOGLE_API_KEY set → Gemini (preferred for indexing throughput / free tier)
-    3. claude-agent-sdk importable AND SKILL_ROUTER_FORCE_API_KEY not set → SDK
+    3. claude-agent-sdk importable AND SKILLOGY_FORCE_API_KEY not set → SDK
     4. ANTHROPIC_API_KEY set → Anthropic API
     5. Raises RuntimeError with a clear message
     """
-    forced = os.environ.get("SKILL_ROUTER_LLM", "").lower()
-    force_api_key = os.environ.get("SKILL_ROUTER_FORCE_API_KEY")
+    forced = os.environ.get("SKILLOGY_LLM", "").lower()
+    force_api_key = os.environ.get("SKILLOGY_FORCE_API_KEY")
 
     # 1. Explicit provider override
     if forced == "gemini":
         if not _is_genai_available():
-            raise RuntimeError("SKILL_ROUTER_LLM=gemini set but google-genai is not installed.")
+            raise RuntimeError("SKILLOGY_LLM=gemini set but google-genai is not installed.")
         return _GeminiClient(model=_resolve_model_for_provider("gemini", model))
     if forced == "sdk":
         if not _is_sdk_available():
-            raise RuntimeError("SKILL_ROUTER_LLM=sdk set but claude-agent-sdk is not installed.")
+            raise RuntimeError("SKILLOGY_LLM=sdk set but claude-agent-sdk is not installed.")
         return _SDKClient(model=_normalize_model(model))
     if forced == "api":
         if not os.environ.get("ANTHROPIC_API_KEY"):
-            raise RuntimeError("SKILL_ROUTER_LLM=api set but ANTHROPIC_API_KEY is not set.")
+            raise RuntimeError("SKILLOGY_LLM=api set but ANTHROPIC_API_KEY is not set.")
         return _APIClient(model=_normalize_model(model))
 
     # 2. Auto-detect: Gemini first if key present (preferred for indexing)

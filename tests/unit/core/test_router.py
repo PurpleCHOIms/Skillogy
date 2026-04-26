@@ -1,4 +1,4 @@
-"""Tests for skill_router.core.router — Neo4j-backed implementation.
+"""Tests for skillogy.core.router — Neo4j-backed implementation.
 
 Unit tests mock the Neo4j driver using FakeDriver that returns canned results.
 Integration tests are marked @pytest.mark.integration and skipped by default.
@@ -14,8 +14,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from skill_router.core.router import Router, RoutingResult
-from skill_router.domain.types import Signal
+from skillogy.core.router import Router, RoutingResult
+from skillogy.domain.types import Signal
 
 
 # ---------------------------------------------------------------------------
@@ -225,7 +225,7 @@ def test_no_old_predicates_in_cypher() -> None:
 
 def test_no_vector_embeddings_used() -> None:
     """router.py must not contain any embedding/vector-similarity logic."""
-    router_path = Path(__file__).parent.parent.parent.parent / "src" / "skill_router" / "core" / "router.py"
+    router_path = Path(__file__).parent.parent.parent.parent / "src" / "skillogy" / "core" / "router.py"
     source = router_path.read_text(encoding="utf-8")
     forbidden = re.compile(r"\b(embed|embedding|embeddings|cosine)\b", re.IGNORECASE)
     matches = forbidden.findall(source)
@@ -435,8 +435,8 @@ def test_relates_to_dedups_against_primary() -> None:
 # ---------------------------------------------------------------------------
 
 def test_relates_to_respects_env_limit(monkeypatch) -> None:
-    """SKILL_ROUTER_RELATES_K env var controls the LIMIT passed to the RELATES_TO query."""
-    monkeypatch.setenv("SKILL_ROUTER_RELATES_K", "1")
+    """SKILLOGY_RELATES_K env var controls the LIMIT passed to the RELATES_TO query."""
+    monkeypatch.setenv("SKILLOGY_RELATES_K", "1")
 
     primary_rows = [
         {
@@ -526,8 +526,8 @@ def test_routing_real_neo4j() -> None:
     from testcontainers.neo4j import Neo4jContainer  # type: ignore[import]
     from neo4j import GraphDatabase
 
-    from skill_router.core.graph import build_graph, init_schema
-    from skill_router.domain.types import TriggerSurface
+    from skillogy.core.graph import build_graph, init_schema
+    from skillogy.domain.types import TriggerSurface
 
     with Neo4jContainer("neo4j:5-community").with_env("NEO4J_AUTH", "neo4j/skillrouter") as container:
         uri = container.get_connection_url()

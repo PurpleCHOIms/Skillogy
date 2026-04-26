@@ -1,4 +1,4 @@
-"""FastAPI web API for skill_router — US-008/US-009."""
+"""FastAPI web API for skillogy — US-008/US-009."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def _get_skills() -> list[Any]:
 def _load_skills() -> list[Any]:
     """Scan skills and dedup by name (project > user > plugin priority)."""
     try:
-        from skill_router.infra.scanner import scan_skills  # noqa: PLC0415
+        from skillogy.infra.scanner import scan_skills  # noqa: PLC0415
 
         skills = scan_skills()
         _scope_rank = {"project": 0, "user": 1, "plugin": 2}
@@ -58,15 +58,15 @@ def _load_skills() -> list[Any]:
         logger.info("Loaded %d skills into cache (from %d scanned)", len(unique), len(skills))
         return unique
     except Exception as exc:  # noqa: BLE001
-        logger.warning("skill_router.scanner unavailable (%s); serving empty list", exc)
+        logger.warning("skillogy.scanner unavailable (%s); serving empty list", exc)
         return []
 
 
 def _extra_roots() -> list[str]:
-    """Return resolved extra project roots from SKILL_ROUTER_EXTRA_ROOTS env var."""
+    """Return resolved extra project roots from SKILLOGY_EXTRA_ROOTS env var."""
     import os  # noqa: PLC0415
     roots = []
-    for raw in os.environ.get("SKILL_ROUTER_EXTRA_ROOTS", "").split(":"):
+    for raw in os.environ.get("SKILLOGY_EXTRA_ROOTS", "").split(":"):
         raw = raw.strip()
         if raw:
             p = Path(raw).expanduser()
@@ -77,7 +77,7 @@ def _extra_roots() -> list[str]:
 def _project_root_for(source_path: Any) -> str | None:
     """Return the project root dir for a project-scope skill.
 
-    Handles both .claude/skills project layout and SKILL_ROUTER_EXTRA_ROOTS paths.
+    Handles both .claude/skills project layout and SKILLOGY_EXTRA_ROOTS paths.
     """
     path = Path(source_path)
     abs_str = str(path.expanduser().absolute())
@@ -194,7 +194,7 @@ def get_graph() -> dict:
     try:
         from neo4j.exceptions import ServiceUnavailable  # noqa: PLC0415
 
-        from skill_router.core.graph import export_graph_json  # noqa: PLC0415
+        from skillogy.core.graph import export_graph_json  # noqa: PLC0415
 
         return export_graph_json()
     except ServiceUnavailable as exc:
@@ -208,7 +208,7 @@ def get_graph() -> dict:
 def _get_graph_data() -> dict:
     """Return graph data from Neo4j, falling back to empty on any exception."""
     try:
-        from skill_router.core.graph import export_graph_json  # noqa: PLC0415
+        from skillogy.core.graph import export_graph_json  # noqa: PLC0415
 
         return export_graph_json()
     except Exception as exc:  # noqa: BLE001
