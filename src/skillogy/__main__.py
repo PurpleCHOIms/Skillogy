@@ -17,7 +17,7 @@ def cmd_index(args: argparse.Namespace) -> None:
     logging.basicConfig(level=logging.INFO)
 
     from skillogy.infra.llm import get_llm_client  # noqa: PLC0415
-    from skillogy.infra.db import close_driver, get_driver  # noqa: PLC0415
+    from skillogy.infra.db import close_store, get_store  # noqa: PLC0415
     from skillogy.core.extractor import extract  # noqa: PLC0415
     from skillogy.core.graph import build_graph, enrich_with_parsed, init_schema  # noqa: PLC0415
     from skillogy.infra.scanner import scan_skills  # noqa: PLC0415
@@ -48,19 +48,17 @@ def cmd_index(args: argparse.Namespace) -> None:
             if done % 5 == 0 or done == len(parsed_skills):
                 print(f"  extracted {done}/{len(parsed_skills)}")
 
-    driver = get_driver()
+    store = get_store()
     try:
-        init_schema(driver)
-        summary = build_graph(extracted, driver=driver, clear_first=True)
+        init_schema(store)
+        summary = build_graph(extracted, store=store, clear_first=True)
         parsed_lookup = {p.name: p for p in parsed_skills}
-        enriched = enrich_with_parsed(parsed_lookup, driver=driver)
-        # Round 12 schema dropped 'capabilities' bucket; Round 13 adds 'related_to'.
-        # Use defensive .get() so this works regardless of which keys the builder returns.
+        enriched = enrich_with_parsed(parsed_lookup, store=store)
         parts = [f"{k}={v}" for k, v in summary.items()]
         print("Graph built: " + ", ".join(parts))
         print(f"Enriched {enriched} skill nodes with metadata.")
     finally:
-        close_driver()
+        close_store()
 
 
 def main() -> None:

@@ -190,19 +190,14 @@ def get_skill(name: str) -> dict:
 
 @app.get("/api/graph")
 def get_graph() -> dict:
-    """Return graph nodes and edges from Neo4j; falls back gracefully if DB unavailable."""
+    """Return graph nodes and edges; falls back gracefully if DB unavailable."""
     try:
-        from neo4j.exceptions import ServiceUnavailable  # noqa: PLC0415
-
         from skillogy.core.graph import export_graph_json  # noqa: PLC0415
 
         return export_graph_json()
-    except ServiceUnavailable as exc:
-        logger.warning("Neo4j unavailable: %s", exc)
-        return {"nodes": [], "edges": [], "warning": "neo4j not running"}
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Failed to query Neo4j graph: %s", exc)
-        return {"nodes": [], "edges": [], "warning": "neo4j not running"}
+        logger.warning("Failed to query graph store: %s", exc)
+        return {"nodes": [], "edges": [], "warning": "graph store not available"}
 
 
 def _get_graph_data() -> dict:

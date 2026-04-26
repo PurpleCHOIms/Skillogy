@@ -13,11 +13,11 @@
 
 ## What it does
 
-Skillogy turns your scattered `SKILL.md` files into a **typed knowledge graph** in Neo4j, then
-uses an LLM to extract intent + signals from each user prompt and traverse the graph to find
-the most relevant skill. The chosen skill name is injected into Claude Code as
-`additionalContext` via a `UserPromptSubmit` hook, so Claude Code calls the right `Skill`
-tool autonomously.
+Skillogy turns your scattered `SKILL.md` files into a **typed knowledge graph** (Kuzu by default,
+Neo4j optional), then uses an LLM to extract intent + signals from each user prompt and traverses
+the graph to find the most relevant skill. The chosen skill name is injected into Claude Code as
+`additionalContext` via a `UserPromptSubmit` hook, so Claude Code calls the right `Skill` tool
+autonomously.
 
 ```
 user prompt  →  hook  →  LLM extract  →  Neo4j graph  →  LLM judge  →  skill hint  →  Claude Code
@@ -49,7 +49,19 @@ Reproduce: `make bench-claude-all` (writes `bench/results/{model}_{timestamp}_su
 
 ## Architecture
 
-### Graph schema (Neo4j)
+### Graph backend
+
+Skillogy ships with two interchangeable backends behind a single `GraphStore` interface:
+
+| Backend | Set with | Storage | When to use |
+|---|---|---|---|
+| **Kuzu** *(default)* | `SKILLOGY_DB=kuzu` | Embedded `~/.skillogy/graph.kuzu/` directory | OSS / plugin users — zero external deps, single `pip install` |
+| **Neo4j** | `SKILLOGY_DB=neo4j` | Server (Docker / Aura) | Large graphs, Neo4j Browser visualisation, production deployments |
+
+Both backends speak the same `GraphStore` API — the rest of the codebase never sees Cypher. The
+on-disk Kuzu directory and Neo4j database are migration-compatible: same schema, same semantics.
+
+### Graph schema
 
 ```
 (:Skill {name, description, scope, source_path, body_length})
@@ -81,8 +93,8 @@ Reproduce: `make bench-claude-all` (writes `bench/results/{model}_{timestamp}_su
 ```
 src/skillogy/
 ├── domain/        # ParsedSkill, Signal, TriggerSurface dataclasses
-├── infra/         # scanner.py, llm.py (sdk/gemini/api), db.py (Neo4j driver)
-├── core/          # extractor.py, graph.py (Neo4j builder), router.py
+├── infra/         # scanner.py, llm.py (sdk/gemini/api), db.py (GraphStore: Kuzu/Neo4j)
+├── core/          # extractor.py, graph.py (semantic builder), router.py
 └── adapters/      # hook.py, web_api.py (FastAPI)
 bench/             # eval-set generation, runner, claude_runner, charts
 web/               # React + Cytoscape graph explorer (Vite)
@@ -95,9 +107,9 @@ scripts/           # skillogy-hook.sh entry point
 
 ### Prerequisites
 - Python 3.11+
-- Docker (for Neo4j)
 - Claude Code CLI (logged in)
 - `uv` (or pip)
+- Docker — only required when using the Neo4j backend (`SKILLOGY_DB=neo4j`)
 
 ### Install
 ```bash
@@ -109,8 +121,16 @@ cp .env.example .env                # fill in NEO4J_PASSWORD if not default
 
 ### Index your skills
 ```bash
-make neo4j-up                       # start Neo4j on :7474 / :7687
 make index-testbed                  # or `make index` for ALL local SKILL.md
+```
+
+The default Kuzu backend writes to `~/.skillogy/graph.kuzu/` and needs no external
+service. To use Neo4j instead:
+
+```bash
+export SKILLOGY_DB=neo4j
+make neo4j-up                       # start Neo4j on :7474 / :7687
+make index-testbed
 ```
 
 `make index` discovers skills from:
@@ -167,6 +187,8 @@ Backed by a FastAPI service at `:8765` (`/api/skills`, `/api/graph`,
 
 | Env var | Purpose | Default |
 |---|---|---|
+| `SKILLOGY_DB` | Graph backend: `kuzu` \| `neo4j` | `kuzu` |
+| `SKILLOGY_KUZU_PATH` | Kuzu database directory (created on first run) | `~/.skillogy/graph.kuzu` |
 | `SKILLOGY_DISABLE` | `1` bypasses the hook (passthrough only) | unset |
 | `SKILLOGY_MIN_SCORE` | Minimum router score to inject hint | `0.4` |
 | `SKILLOGY_RELATES_K` | Companion skills surfaced via RELATES_TO | `3` |
@@ -176,7 +198,7 @@ Backed by a FastAPI service at `:8765` (`/api/skills`, `/api/graph`,
 | `SKILLOGY_EXTRA_ROOTS` | Colon-separated extra skill dirs (treated as project scope) | unset |
 | `GOOGLE_API_KEY` | Required when using Gemini backend | unset |
 | `ANTHROPIC_API_KEY` | Required when using direct API backend | unset |
-| `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Neo4j connection | localhost / `skillrouter` |
+| `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Neo4j connection (only when `SKILLOGY_DB=neo4j`) | localhost / `skillrouter` |
 
 Provider auto-selection order: `SKILLOGY_LLM` override → `GOOGLE_API_KEY` → Claude Agent
 SDK → `ANTHROPIC_API_KEY`.

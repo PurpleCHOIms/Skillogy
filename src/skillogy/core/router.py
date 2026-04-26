@@ -5,13 +5,11 @@ from __future__ import annotations
 import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
-from neo4j import Driver, RoutingControl
-
 from skillogy.infra.llm import LLMClient, get_llm_client
-from skillogy.infra.db import get_driver
+from skillogy.infra.db import GraphStore, get_store
 from skillogy.domain.types import Signal
 
 logger = logging.getLogger(__name__)
@@ -41,57 +39,33 @@ Output STRICT JSON: {"winner": "<skill_name>", "reason": "<one short sentence>"}
 Return ONLY the JSON object, no preamble."""
 
 
-# Cypher for fetching RELATES_TO companion skills
-# SKILLOGY_RELATES_K env var controls the limit (default 3)
-_RELATED_NEIGHBORS_CYPHER = """
-MATCH (s:Skill {name: $name})-[:RELATES_TO]->(t:Skill)
-WHERE NOT t.name IN $exclude
-RETURN t.name AS name, t.description AS description, t.scope AS scope
-LIMIT $k
-"""
-
-# Cypher for collecting + scoring candidates via trigger surface
-_COLLECT_SCORE_CYPHER = """\
-MATCH (s:Skill)-[:TRIGGERED_BY]->(n)
-WHERE (n:Intent AND n.label IN $intents)
-   OR (n:Signal AND [n.kind, n.value] IN $signal_pairs)
-WITH s,
-     sum(CASE WHEN n:Intent THEN 2.0 ELSE 1.0 END) AS score,
-     collect(DISTINCT {kind: head(labels(n)), id: coalesce(n.label, n.value)}) AS hits
-WHERE NOT EXISTS {
-  MATCH (s)-[:EXCLUDED_BY]->(e:Signal)
-  WHERE [e.kind, e.value] IN $signal_pairs
-}
-RETURN s.name AS name,
-       s.description AS description,
-       s.source_path AS source_path,
-       s.scope AS scope,
-       score,
-       hits
-ORDER BY score DESC
-LIMIT $top_k
-"""
-
-
 class Router:
     """Pure GraphRAG router. No vector similarity — trigger surface graph only."""
 
-    def __init__(self, driver: Driver | None = None, llm: LLMClient | None = None) -> None:
-        self.driver = driver or get_driver()
+    def __init__(self, store: GraphStore | None = None, llm: LLMClient | None = None) -> None:
+        self.store = store or get_store()
         self.llm = llm or get_llm_client()
 
-    def find_skill(self, query: str, top_k: int = 5, judge: bool = True, extract: bool = True, load_body: bool = True) -> RoutingResult:
+    def find_skill(
+        self,
+        query: str,
+        top_k: int = 5,
+        judge: bool = True,
+        extract: bool = True,
+        load_body: bool = True,
+    ) -> RoutingResult:
         # Step 1: extract Intent + Signal nodes from query
         if extract:
             intents, signals = self._extract_query_nodes(query)
         else:
-            # Keyword-only fast path (no LLM call) — for hook use
             kws = [w.lower() for w in query.split() if len(w) > 2]
             intents = []
             signals = [Signal(kind="keyword", value=k) for k in kws[:10]]
 
-        # Step 2: collect + score candidates via single Cypher query
-        rows = self._collect_and_score(intents, signals, top_k=top_k)
+        signal_pairs = [(s.kind, s.value) for s in signals]
+
+        # Step 2: collect + score candidates via the store
+        rows = self.store.score_candidates(intents=intents, signal_pairs=signal_pairs, top_k=top_k)
 
         if not rows:
             return RoutingResult(
@@ -108,14 +82,15 @@ class Router:
         else:
             winner_name = rows[0]["name"]
 
-        # Find winner row
         winner_row = next((r for r in rows if r["name"] == winner_name), rows[0])
         winner_score = winner_row["score"]
 
-        # Build reasoning path from hits in the winner row
-        reasoning_path = self._reasoning_path_from_hits(winner_name, winner_row["hits"])
+        reasoning_path = [
+            (winner_name, "triggered_by", hit.get("id", ""))
+            for hit in winner_row.get("hits", [])
+            if hit.get("id")
+        ]
 
-        # Read winner skill body from disk via source_path attr (only when requested)
         skill_body = ""
         if load_body:
             source_path = winner_row.get("source_path") or ""
@@ -132,8 +107,14 @@ class Router:
         ]
 
         relates_k = int(os.environ.get("SKILLOGY_RELATES_K", "3"))
-        exclude: set[str] = {winner_name} | {a["name"] for a in alternatives if a.get("name")}
-        related = self._fetch_related(winner_name, exclude, relates_k)
+        exclude_set: set[str] = {winner_name} | {a["name"] for a in alternatives if a.get("name")}
+        related = self.store.fetch_related(
+            skill_name=winner_name,
+            exclude=list(exclude_set),
+            k=relates_k,
+        )
+        for r in related:
+            r["via"] = "relates_to"
         alternatives = list(alternatives) + related
 
         return RoutingResult(
@@ -147,7 +128,6 @@ class Router:
     # ------------------------------------------------------------------ internals
 
     def _extract_query_nodes(self, query: str) -> tuple[list[str], list[Signal]]:
-        """Single LLM call to parse query into Intent + Signal node candidates."""
         try:
             raw = self.llm.complete(
                 prompt=query,
@@ -167,76 +147,7 @@ class Router:
             kws = [w.lower() for w in query.split() if len(w) > 2]
             return [], [Signal(kind="keyword", value=k) for k in kws[:10]]
 
-    def _collect_and_score(
-        self,
-        intents: list[str],
-        signals: list[Signal],
-        top_k: int = 5,
-    ) -> list[dict]:
-        """Execute single Cypher query to collect and score candidate skills."""
-        signal_pairs = [[s.kind, s.value] for s in signals]
-
-        records, _, _ = self.driver.execute_query(
-            _COLLECT_SCORE_CYPHER,
-            intents=intents,
-            signal_pairs=signal_pairs,
-            top_k=top_k,
-            routing_=RoutingControl.READ,
-        )
-
-        rows = []
-        for record in records:
-            rows.append({
-                "name": record["name"],
-                "description": record["description"],
-                "source_path": record["source_path"],
-                "scope": record["scope"],
-                "score": record["score"],
-                "hits": list(record["hits"]),
-            })
-        return rows
-
-    def _reasoning_path_from_hits(
-        self,
-        skill_name: str,
-        hits: list[dict],
-    ) -> list[tuple[str, str, str]]:
-        """Derive reasoning path from hits returned by _collect_and_score."""
-        path: list[tuple[str, str, str]] = []
-        for hit in hits:
-            node_id = hit.get("id", "")
-            node_kind = hit.get("kind", "")
-            if node_id:
-                path.append((skill_name, "triggered_by", node_id))
-        return path
-
-    def _fetch_related(self, top_skill_name: str, exclude: set, k: int) -> list[dict]:
-        """Fetch RELATES_TO companion skills for the top-matched skill.
-
-        Returns up to k related skills that are not already in exclude.
-        Each entry carries via="relates_to" so consumers can distinguish
-        trigger-based picks from companion picks.
-        """
-        if not top_skill_name:
-            return []
-        records, _, _ = self.driver.execute_query(
-            _RELATED_NEIGHBORS_CYPHER,
-            name=top_skill_name,
-            exclude=list(exclude),
-            k=k,
-        )
-        return [
-            {
-                "name": r["name"],
-                "description": r["description"] or "",
-                "scope": r["scope"] or "user",
-                "via": "relates_to",
-            }
-            for r in records
-        ]
-
     def _llm_judge(self, query: str, rows: list[dict]) -> str:
-        """Pick best from candidates using a single LLM call."""
         candidates_text = "\n".join(
             f"- {r['name']} (score={r['score']:.2f}): {(r.get('description') or '')[:300]}"
             for r in rows

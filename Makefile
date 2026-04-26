@@ -34,7 +34,8 @@ install:  ## Recreate venv via uv + install dev deps
 env-check:  ## Verify Python (uv-managed), deps, Docker, LLM creds
 	@printf "\n── uv ──\n"; uv --version
 	@printf "── python (uv-managed venv) ──\n"; $(PYTHON) -V
-	@printf "── deps ──\n"; uv pip list --python $(PYTHON) 2>/dev/null | grep -iE "^(neo4j|fastapi|anthropic|sentence-transformers|matplotlib|networkx|claude-agent-sdk)" | head -10 || true
+	@printf "── deps ──\n"; uv pip list --python $(PYTHON) 2>/dev/null | grep -iE "^(kuzu|neo4j|fastapi|anthropic|sentence-transformers|matplotlib|networkx|claude-agent-sdk)" | head -10 || true
+	@printf "── graph backend ──\n"; echo "  SKILLOGY_DB: $${SKILLOGY_DB:-kuzu (default)}"
 	@printf "── docker ──\n"; (docker --version && docker ps --filter "name=$(NEO4J_CONTAINER)" --format '  container: {{.Names}} {{.Status}}') || echo "  Docker not available"
 	@printf "── llm credentials ──\n"
 	@if [ -n "$$GOOGLE_API_KEY" ];   then echo "  GOOGLE_API_KEY:    set (len $${#GOOGLE_API_KEY})";  else echo "  GOOGLE_API_KEY:    unset"; fi
@@ -61,13 +62,18 @@ test-integration: neo4j-up  ## Integration tests (Docker + Neo4j required)
 # ── Neo4j ──────────────────────────────────────────────────────────
 
 .PHONY: neo4j-up
-neo4j-up:  ## Start Neo4j (Docker), wait until /browser is up (max ~2 min)
-	@docker compose up -d neo4j
-	@printf "Waiting for Neo4j on http://localhost:7474 "
-	@for i in $$(seq 1 120); do \
-	  if curl -s http://localhost:7474 -o /dev/null; then printf " ready (%ds)\n" $$i; exit 0; fi; \
-	  printf "."; sleep 1; \
-	done; printf "\n  Neo4j did not respond — check 'make neo4j-logs'\n"; exit 1
+neo4j-up:  ## Start Neo4j (only when SKILLOGY_DB=neo4j; otherwise no-op for Kuzu)
+	@if [ "$$SKILLOGY_DB" = "neo4j" ]; then \
+	  docker compose up -d neo4j; \
+	  printf "Waiting for Neo4j on http://localhost:7474 "; \
+	  for i in $$(seq 1 120); do \
+	    if curl -s http://localhost:7474 -o /dev/null; then printf " ready (%ds)\n" $$i; exit 0; fi; \
+	    printf "."; sleep 1; \
+	  done; \
+	  printf "\n  Neo4j did not respond — check 'make neo4j-logs'\n"; exit 1; \
+	else \
+	  printf "  SKILLOGY_DB=$${SKILLOGY_DB:-kuzu} — skipping Neo4j (embedded backend in use)\n"; \
+	fi
 
 .PHONY: neo4j-down
 neo4j-down:  ## Stop Neo4j

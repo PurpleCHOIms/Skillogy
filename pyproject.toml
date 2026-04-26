@@ -18,10 +18,13 @@ dependencies = [
     "python-multipart",
     "matplotlib",
     "pandas",
-    "neo4j>=5.20",
+    "kuzu>=0.6",
 ]
 
 [project.optional-dependencies]
+neo4j = [
+    "neo4j>=5.20",
+]
 bench = [
     "sentence-transformers>=3.0",
     "numpy>=1.26",
@@ -29,6 +32,7 @@ bench = [
 dev = [
     "pytest",
     "pytest-asyncio",
+    "neo4j>=5.20",
     "testcontainers[neo4j]>=4.0",
     "sentence-transformers>=3.0",
     "numpy>=1.26",
