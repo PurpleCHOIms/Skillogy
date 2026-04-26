@@ -83,7 +83,7 @@ src/skillogy/
 ├── domain/        # ParsedSkill, Signal, TriggerSurface dataclasses
 ├── infra/         # scanner.py, llm.py (sdk/gemini/api), db.py (Neo4j driver)
 ├── core/          # extractor.py, graph.py (Neo4j builder), router.py
-└── adapters/      # hook.py, mcp_server.py, web_api.py (FastAPI)
+└── adapters/      # hook.py, web_api.py (FastAPI)
 bench/             # eval-set generation, runner, claude_runner, charts
 web/               # React + Cytoscape graph explorer (Vite)
 scripts/           # skillogy-hook.sh entry point
@@ -120,7 +120,7 @@ make index-testbed                  # or `make index` for ALL local SKILL.md
 - Anything in `SKILLOGY_EXTRA_ROOTS` (colon-separated paths)
 
 Run `make index-clear` to wipe the graph; `make confidence` for a 2-minute end-to-end
-sanity check (env, tests, Neo4j, smoke index, router, hook, MCP).
+sanity check (env, tests, Neo4j, smoke index, router, hook).
 
 ### Wire the hook into Claude Code
 The repo ships a project-level hook for the testbed. To enable it globally, run:
@@ -204,7 +204,6 @@ SDK → `ANTHROPIC_API_KEY`.
 - [ ] Package as a Claude Code plugin (currently installed manually as a hook)
 - [ ] Vector embedding fallback for cold-start projects
 - [ ] Built-in `RELATES_TO` learning from co-invocation traces
-- [ ] Polish the experimental MCP adapter (`find_skill` / `list_skills` / `get_skill`) so it's usable cross-agent
 
 ---
 

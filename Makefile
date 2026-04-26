@@ -20,7 +20,7 @@ export
 help:  ## Show this help
 	@printf "\nSkill Trigger Graph — manual test targets\n\n"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z][a-zA-Z0-9_-]*:.*?## / {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@printf "\nQuick path: \033[1mmake confidence\033[0m  (env-check + tests + Neo4j + smoke index + router + hook + mcp)\n\n"
+	@printf "\nQuick path: \033[1mmake confidence\033[0m  (env-check + tests + Neo4j + smoke index + router + hook)\n\n"
 
 # ── Setup ───────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ install:  ## Recreate venv via uv + install dev deps
 env-check:  ## Verify Python (uv-managed), deps, Docker, LLM creds
 	@printf "\n── uv ──\n"; uv --version
 	@printf "── python (uv-managed venv) ──\n"; $(PYTHON) -V
-	@printf "── deps ──\n"; uv pip list --python $(PYTHON) 2>/dev/null | grep -iE "^(neo4j|fastapi|mcp|anthropic|sentence-transformers|matplotlib|networkx|claude-agent-sdk)" | head -10 || true
+	@printf "── deps ──\n"; uv pip list --python $(PYTHON) 2>/dev/null | grep -iE "^(neo4j|fastapi|anthropic|sentence-transformers|matplotlib|networkx|claude-agent-sdk)" | head -10 || true
 	@printf "── docker ──\n"; (docker --version && docker ps --filter "name=$(NEO4J_CONTAINER)" --format '  container: {{.Names}} {{.Status}}') || echo "  Docker not available"
 	@printf "── llm credentials ──\n"
 	@if [ -n "$$GOOGLE_API_KEY" ];   then echo "  GOOGLE_API_KEY:    set (len $${#GOOGLE_API_KEY})";  else echo "  GOOGLE_API_KEY:    unset"; fi
@@ -147,21 +147,6 @@ hook-install-snippet:  ## Print the JSON to merge into ~/.claude/settings.json
 	@printf '\nMerge this into ~/.claude/settings.json (under "hooks"):\n\n'
 	@$(PYTHON) -c "import json; print(json.dumps({'hooks':{'UserPromptSubmit':[{'hooks':[{'type':'command','command':'$(ROOT)/scripts/skillogy-hook.sh'}]}]}}, indent=2))"
 	@printf "\nThen restart your Claude Code session.\n\n"
-
-# ── MCP server ─────────────────────────────────────────────────────
-
-.PHONY: mcp-smoke
-mcp-smoke:  ## Start MCP server for 3s, ensure no crash
-	@timeout 3 $(PYTHON) -m skillogy.adapters.mcp_server >/dev/null 2>&1; \
-	  if [ $$? -eq 124 ]; then echo "  MCP server stayed up for 3s (good)"; else echo "  MCP server exited unexpectedly"; fi
-
-.PHONY: mcp-register
-mcp-register:  ## Register the MCP server in Claude Code
-	claude mcp add skillogy $(PYTHON) -m skillogy.adapters.mcp_server
-
-.PHONY: mcp-list
-mcp-list:  ## Show registered MCP servers in Claude Code
-	claude mcp list
 
 # ── Web UI ─────────────────────────────────────────────────────────
 
@@ -310,7 +295,7 @@ open-hero-chart:  ## Open hero chart in system viewer
 # ── Confidence: 10-min end-to-end ──────────────────────────────────
 
 .PHONY: confidence
-confidence: env-check test-quiet neo4j-up index-smoke router-smoke hook-smoke-disabled mcp-smoke  ## End-to-end confidence run (~2 min)
+confidence: env-check test-quiet neo4j-up index-smoke router-smoke hook-smoke-disabled  ## End-to-end confidence run (~2 min)
 	@printf "\n\033[32m✓ Confidence run complete\033[0m\n"
 	@printf "Next steps:\n"
 	@printf "  - Browse Neo4j data:    \033[36mmake neo4j-browser\033[0m\n"
