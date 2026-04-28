@@ -3,7 +3,10 @@
 # Reads prompt JSON from stdin, emits hookSpecificOutput.additionalContext on stdout.
 
 set -e
-ROOT="${SKILLOGY_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(pwd)}}"
+# Same ROOT-derivation as skillogy-bootstrap.sh — pwd fallback would resolve
+# to the user's working directory which has no dist/.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="${SKILLOGY_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}}"
 LOG_DIR="${SKILLOGY_LOG_DIR:-/tmp/skillogy}"
 mkdir -p "$LOG_DIR"
 

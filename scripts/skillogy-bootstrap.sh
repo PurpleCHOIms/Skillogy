@@ -18,7 +18,15 @@ if [ "${SKILLOGY_SKIP_BOOTSTRAP:-}" = "1" ]; then
     exit 0
 fi
 
-ROOT="${SKILLOGY_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(pwd)}}"
+# Derive ROOT in this priority:
+#   1. SKILLOGY_ROOT  — explicit override
+#   2. CLAUDE_PLUGIN_ROOT — set by Claude Code when invoked from a hook
+#   3. The script's own parent dir — works even when this script is run
+#      directly from a slash command's `!` block where the env var is not
+#      propagated into the subshell. Falling back to $(pwd) here would point
+#      at the user's working directory, which has no dist/ or package.json.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="${SKILLOGY_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}}"
 LOG_DIR="${SKILLOGY_LOG_DIR:-/tmp/skillogy}"
 mkdir -p "$LOG_DIR"
 
