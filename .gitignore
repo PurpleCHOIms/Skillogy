@@ -1,25 +1,24 @@
-# ── Python ───────────────────────────────────────────────────────
-.venv/
-venv/
-env/
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-*.egg
-.eggs/
-build/
+# ── Node / TypeScript ────────────────────────────────────────────
+node_modules/
+# dist/ is built locally + by CI for `npm publish`. Plugin distribution is via
+# npm (see .claude-plugin/marketplace.json source: npm), so end users get the
+# bundled dist/ from the npm registry — main stays clean.
 dist/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.tox/
-.coverage
-.coverage.*
-htmlcov/
-coverage.xml
-*.cover
-.hypothesis/
+dist-test/
+*.tsbuildinfo
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Web frontend ─────────────────────────────────────────────────
+web/node_modules/
+web/dist/
+web/build/
+web/.next/
+web/.turbo/
+web/.vite/
 
 # ── Environment / secrets ────────────────────────────────────────
 .env
@@ -27,25 +26,6 @@ coverage.xml
 .env.*.local
 *.pem
 *.key
-
-# ── Node / Web ───────────────────────────────────────────────────
-web/node_modules/
-web/dist/
-web/build/
-web/.next/
-web/.turbo/
-web/.vite/
-node_modules/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# ── Benchmark outputs (generated) ────────────────────────────────
-bench/results/*.png
-bench/results/*.json
-bench/data/eval.jsonl
 
 # ── Editor / OS ──────────────────────────────────────────────────
 .vscode/
@@ -67,8 +47,15 @@ presentation/
 research/
 
 # ── Hook payload temp files ──────────────────────────────────────
-/tmp/skill-router-*.log
-/tmp/skill-router-*.pid
+/tmp/skillogy-*.log
+/tmp/skillogy-*.pid
+
+# ── Legacy Python (kept under legacy-python/) ────────────────────
+legacy-python/.venv/
+legacy-python/.pytest_cache/
+legacy-python/__pycache__/
+legacy-python/**/__pycache__/
+legacy-python/**/*.pyc
 
 # ── Misc ─────────────────────────────────────────────────────────
 *.bak

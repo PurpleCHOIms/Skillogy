@@ -1,0 +1,71 @@
+{
+  "name": "skillogy",
+  "version": "0.2.0",
+  "description": "GraphRAG-based skill router for Claude Code — Claude Code plugin (TypeScript port).",
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "PurpleCHOIms"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PurpleCHOIms/Skillogy.git"
+  },
+  "homepage": "https://github.com/PurpleCHOIms/Skillogy",
+  "bugs": {
+    "url": "https://github.com/PurpleCHOIms/Skillogy/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "skillogy": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "scripts",
+    "hooks",
+    "commands",
+    ".claude-plugin",
+    "docker-compose.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:check": "tsc --noEmit && node scripts/build.mjs",
+    "dev": "tsx",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run lint && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.111",
+    "@anthropic-ai/sdk": "^0.40.0",
+    "@google/genai": "^1.0.0",
+    "@hono/node-server": "^1.13.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "commander": "^13.0.0",
+    "hono": "^4.6.0",
+    "neo4j-driver": "^5.27.0",
+    "yaml": "^2.6.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "skill-router",
+    "graphrag",
+    "neo4j",
+    "agent-tooling"
+  ]
+}
