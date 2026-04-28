@@ -3,7 +3,7 @@ import type { Driver } from "neo4j-driver";
 
 const DEFAULT_URI = "bolt://localhost:7687";
 const DEFAULT_USER = "neo4j";
-const DEFAULT_PASS = "skillrouter";
+const DEFAULT_PASS = "skillogy";
 
 let _driver: Driver | undefined;
 
