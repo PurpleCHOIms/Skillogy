@@ -233,14 +233,17 @@ within the 10 s plugin timeout.
 ### Releasing (maintainers)
 
 ```bash
-# 1. bump versions in package.json AND .claude-plugin/marketplace.json
-npm version 0.2.1 --no-git-tag-version
-# (manually edit marketplace.json source.version to match)
+# 1. bump versions in three places (must match):
+#    - package.json "version"
+#    - .claude-plugin/plugin.json "version"
+#    - .claude-plugin/marketplace.json plugins[0].version AND .source.version
+npm version 0.0.2 --no-git-tag-version
+# (manually edit the two .claude-plugin JSONs to match)
 
 # 2. commit, tag, push
-git commit -am "release: v0.2.1"
-git tag v0.2.1
-git push origin main v0.2.1
+git commit -am "release: v0.0.2"
+git tag v0.0.2
+git push origin main v0.0.2
 ```
 
 The `.github/workflows/publish.yml` job runs `npm publish --provenance` on the
