@@ -32,8 +32,7 @@ export interface LLMClient {
 }
 
 class SDKClient implements LLMClient {
-  constructor(private readonly _model: string) {}
-
+  // No model field — Claude Code's session controls which model the SDK uses.
   async complete(opts: CompleteOptions): Promise<string> {
     // Dynamic import keeps the dependency optional at module-load time.
     const { query } = (await import("@anthropic-ai/claude-agent-sdk")) as {
@@ -165,13 +164,30 @@ class GeminiClient implements LLMClient {
   }
 }
 
-async function isImportable(name: string): Promise<boolean> {
+interface ImportProbe {
+  ok: boolean;
+  // "missing" if the package itself isn't installed, "load-error" if it tried
+  // to load but threw (most often: native binary mismatch on the SDK).
+  reason?: "missing" | "load-error";
+  message?: string;
+}
+
+async function probeImport(name: string): Promise<ImportProbe> {
   try {
     await import(name);
-    return true;
-  } catch {
-    return false;
+    return { ok: true };
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    const message = (err as Error).message ?? String(err);
+    if (code === "ERR_MODULE_NOT_FOUND" || /Cannot find package/.test(message)) {
+      return { ok: false, reason: "missing", message };
+    }
+    return { ok: false, reason: "load-error", message };
   }
+}
+
+async function isImportable(name: string): Promise<boolean> {
+  return (await probeImport(name)).ok;
 }
 
 function resolveModelForProvider(provider: string, model: string): string {
@@ -198,7 +214,7 @@ export async function getLlmClient(model = "claude-haiku-4-5"): Promise<LLMClien
         "SKILLOGY_LLM=sdk set but @anthropic-ai/claude-agent-sdk is not installed.",
       );
     }
-    return new SDKClient(normalizeModel(model));
+    return new SDKClient();
   }
   if (forced === "api") {
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -212,9 +228,23 @@ export async function getLlmClient(model = "claude-haiku-4-5"): Promise<LLMClien
     return new GeminiClient(resolveModelForProvider("gemini", model));
   }
 
-  // 3. Claude Agent SDK
-  if (!forceApiKey && (await isImportable("@anthropic-ai/claude-agent-sdk"))) {
-    return new SDKClient(normalizeModel(model));
+  // 3. Claude Agent SDK — probe explicitly so we can surface load errors
+  //    (e.g. missing platform-specific native binary) rather than silently
+  //    falling through to "no auth".
+  let sdkProbe: ImportProbe | undefined;
+  if (!forceApiKey) {
+    sdkProbe = await probeImport("@anthropic-ai/claude-agent-sdk");
+    if (sdkProbe.ok) {
+      return new SDKClient();
+    }
+    if (sdkProbe.reason === "load-error") {
+      // The package is present but failed to load — usually the platform
+      // native binary is missing or wrong arch. Print the cause; don't
+      // silently fall back to "no auth".
+      process.stderr.write(
+        `[skillogy llm] @anthropic-ai/claude-agent-sdk failed to load: ${sdkProbe.message ?? "(no message)"}\n`,
+      );
+    }
   }
 
   // 4. Anthropic API
@@ -222,8 +252,12 @@ export async function getLlmClient(model = "claude-haiku-4-5"): Promise<LLMClien
     return new APIClient(normalizeModel(model));
   }
 
+  const sdkDetail =
+    sdkProbe?.reason === "load-error"
+      ? ` (claude-agent-sdk present but failed to load: ${sdkProbe.message ?? "?"})`
+      : "";
   throw new Error(
     "No LLM auth available. Set GOOGLE_API_KEY (Gemini), install @anthropic-ai/claude-agent-sdk" +
-      " (provided by Claude Code), or set ANTHROPIC_API_KEY.",
+      ` (provided by Claude Code), or set ANTHROPIC_API_KEY.${sdkDetail}`,
   );
 }

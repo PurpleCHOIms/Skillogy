@@ -1,6 +1,6 @@
 {
   "name": "skillogy",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "GraphRAG-based skill router for Claude Code — Claude Code plugin (TypeScript port).",
   "type": "module",
   "license": "MIT",
@@ -23,7 +23,10 @@
   },
   "files": [
     "dist",
-    "scripts",
+    "scripts/skillogy-bootstrap.sh",
+    "scripts/skillogy-hook.sh",
+    "scripts/skillogy-cli.sh",
+    "scripts/state-set.mjs",
     "hooks",
     "commands",
     ".claude-plugin",

@@ -104,7 +104,26 @@ async function cmdIndex(opts: IndexOptions): Promise<void> {
 }
 
 const program = new Command();
-program.name("skillogy").description("Skillogy GraphRAG skill router").version("0.2.0");
+// Read version from the bundle's neighbour package.json so this never drifts.
+let pkgVersion = "0.0.0";
+try {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const fileUrl = new URL(import.meta.url);
+  const here = fs.realpathSync(path.dirname(fileUrl.pathname));
+  for (const candidate of [
+    path.resolve(here, "../package.json"),
+    path.resolve(here, "../../package.json"),
+  ]) {
+    if (fs.existsSync(candidate)) {
+      pkgVersion = JSON.parse(fs.readFileSync(candidate, "utf-8")).version ?? pkgVersion;
+      break;
+    }
+  }
+} catch {
+  // best-effort; fall back to 0.0.0
+}
+program.name("skillogy").description("Skillogy GraphRAG skill router").version(pkgVersion);
 
 program
   .command("index")

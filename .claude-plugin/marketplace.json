@@ -10,14 +10,14 @@
     {
       "name": "skillogy",
       "description": "Auto-routes Claude Code prompts to the right SKILL.md via a Neo4j knowledge graph. Boosts skill trigger accuracy from ~50% native to ~100% on Sonnet.",
-      "version": "0.0.4",
+      "version": "0.0.5",
       "author": {
         "name": "PurpleCHOIms"
       },
       "source": {
         "source": "npm",
         "package": "skillogy",
-        "version": "0.0.4"
+        "version": "0.0.5"
       },
       "category": "productivity",
       "homepage": "https://github.com/PurpleCHOIms/Skillogy",

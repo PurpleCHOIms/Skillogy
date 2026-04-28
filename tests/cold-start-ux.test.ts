@@ -7,6 +7,11 @@ import type { UserState } from "../src/infra/userState.js";
 const ready: HealthReport = { status: "ready", skillCount: 42 };
 const indexing: HealthReport = { status: "indexing", skillCount: 0 };
 const down: HealthReport = { status: "down", skillCount: 0, errorMessage: "refused" };
+const authMismatch: HealthReport = {
+  status: "auth_mismatch",
+  skillCount: 0,
+  errorMessage: "Neo.ClientError.Security.Unauthorized",
+};
 
 describe("decideColdStartUx — ready path", () => {
   it("proceeds and clears stale notification flags", () => {
@@ -63,6 +68,28 @@ describe("decideColdStartUx — neo4j down (no docker problem)", () => {
     const d = decideColdStartUx(down, { notifiedNeo4jDown: true });
     expect(d.proceedWithRouting).toBe(false);
     expect(d.contextText).toBe("");
+  });
+});
+
+describe("decideColdStartUx — auth mismatch (stale Neo4j volume)", () => {
+  it("first time emits volume-reset hint", () => {
+    const d = decideColdStartUx(authMismatch, {});
+    expect(d.proceedWithRouting).toBe(false);
+    expect(d.contextText).toContain("password doesn't match");
+    expect(d.contextText).toContain("docker volume");
+    expect(d.stateUpdate.notifiedAuthMismatch).toBe(true);
+  });
+
+  it("subsequent calls are silent", () => {
+    const d = decideColdStartUx(authMismatch, { notifiedAuthMismatch: true });
+    expect(d.proceedWithRouting).toBe(false);
+    expect(d.contextText).toBe("");
+  });
+
+  it("ready clears the auth-mismatch flag", () => {
+    const d = decideColdStartUx(ready, { notifiedAuthMismatch: true });
+    expect(d.proceedWithRouting).toBe(true);
+    expect(d.stateUpdate.notifiedAuthMismatch).toBe(false);
   });
 });
 

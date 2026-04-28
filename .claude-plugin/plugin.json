@@ -1,6 +1,6 @@
 {
   "name": "skillogy",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "GraphRAG-based skill router for Claude Code — turns scattered SKILL.md files into a typed Neo4j knowledge graph and tells Claude which skill to load per prompt. TypeScript Claude Code plugin.",
   "author": {
     "name": "PurpleCHOIms"

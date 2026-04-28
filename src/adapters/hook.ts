@@ -75,7 +75,25 @@ export function decideColdStartUx(
     if (state.notifiedNeo4jDown) clears.notifiedNeo4jDown = false;
     if (state.notifiedIndexingPending) clears.notifiedIndexingPending = false;
     if (state.notifiedDockerMissing) clears.notifiedDockerMissing = false;
+    if (state.notifiedAuthMismatch) clears.notifiedAuthMismatch = false;
     return { contextText: "", stateUpdate: clears, proceedWithRouting: true };
+  }
+
+  if (report.status === "auth_mismatch") {
+    if (state.notifiedAuthMismatch) {
+      return { contextText: "", stateUpdate: {}, proceedWithRouting: false };
+    }
+    const text = [
+      "[skillogy] Neo4j is up but the password doesn't match.",
+      "This usually means the data volume was created with an older Skillogy version.",
+      "Reset it: `docker rm -f skillogy-neo4j && docker volume ls -q | grep skillogy_neo4j | xargs docker volume rm` then run /skillogy:setup.",
+      "",
+    ].join("\n");
+    return {
+      contextText: text,
+      stateUpdate: { notifiedAuthMismatch: true },
+      proceedWithRouting: false,
+    };
   }
 
   if (report.status === "indexing") {
@@ -283,9 +301,23 @@ async function main(): Promise<number> {
 // Run main() only when invoked directly (`node dist/adapters/hook.js`); when
 // imported by tests we don't want a stray stdin-consuming process.exit() to
 // fire and confuse the test runner.
-const invokedAsScript =
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href;
+//
+// pathToFileURL(argv[1]) doesn't resolve symlinks, but our distribution path
+// (cache/.../node_modules → DATA via symlink) means import.meta.url and argv[1]
+// can disagree on link state. realpath both sides before comparing.
+function invokedAsScriptCheck(): boolean {
+  const argv1 = process.argv[1];
+  if (!argv1) return false;
+  try {
+    const fs = require("node:fs") as typeof import("node:fs");
+    const real1 = fs.realpathSync(argv1);
+    const realImport = fs.realpathSync(new URL(import.meta.url).pathname);
+    return real1 === realImport;
+  } catch {
+    return import.meta.url === pathToFileURL(argv1).href;
+  }
+}
+const invokedAsScript = invokedAsScriptCheck();
 
 if (invokedAsScript) {
   main()

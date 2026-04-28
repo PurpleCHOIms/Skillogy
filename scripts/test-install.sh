@@ -38,14 +38,14 @@ if [ ! -f "$DEST/dist/adapters/hook.js" ]; then
 fi
 echo "[install-test] dist/adapters/hook.js present ($(wc -c <"$DEST/dist/adapters/hook.js") bytes)"
 
-# 4. Run bootstrap with services skipped. With deps externalized from the
-#    bundle, bootstrap now runs `npm install` into a separate DATA dir to
-#    populate node_modules (including @anthropic-ai/claude-agent-sdk's
-#    platform-specific native binaries). This is slower than v0.0.3 but
-#    matches the official Claude Code plugin pattern and is bounded.
+# 4. Run bootstrap. Drive the install in BLOCKING mode so the test exercises
+#    the full happy path inside one process (background mode is for real
+#    SessionStart use). Do NOT pass SKILLOGY_DATA — let bootstrap pick its
+#    own fallback so we exercise the symlink-into-ROOT branch the production
+#    install path actually depends on.
 START=$(date +%s)
-DATA="$DEST/.skillogy-data"
-SKILLOGY_DATA="$DATA" SKILLOGY_SKIP_NEO4J=1 SKILLOGY_SKIP_INDEX=1 \
+SKILLOGY_INSTALL_BLOCKING=1 \
+    SKILLOGY_SKIP_NEO4J=1 SKILLOGY_SKIP_INDEX=1 \
     SKILLOGY_LOG_DIR="$DEST/.logs" \
     bash "$DEST/scripts/skillogy-bootstrap.sh" >/dev/null 2>&1 || {
     echo "[install-test] FAIL: bootstrap exited non-zero"
@@ -53,16 +53,26 @@ SKILLOGY_DATA="$DATA" SKILLOGY_SKIP_NEO4J=1 SKILLOGY_SKIP_INDEX=1 \
     exit 1
 }
 ELAPSED=$(( $(date +%s) - START ))
-echo "[install-test] bootstrap took ${ELAPSED}s (includes npm install in DATA)"
+echo "[install-test] bootstrap took ${ELAPSED}s (includes npm install)"
 
 if [ "$ELAPSED" -gt 120 ]; then
     echo "[install-test] FAIL: bootstrap took ${ELAPSED}s (>120s)"
     exit 1
 fi
-if [ ! -d "$DATA/node_modules/@anthropic-ai/claude-agent-sdk" ]; then
-    echo "[install-test] FAIL: $DATA/node_modules/@anthropic-ai/claude-agent-sdk missing — npm install did not bring SDK"
+# DATA defaulted to $DEST/.skillogy-data (CLAUDE_PLUGIN_DATA unset, ROOT inferred).
+DATA_FALLBACK="$DEST/.skillogy-data"
+if [ ! -d "$DATA_FALLBACK/node_modules/@anthropic-ai/claude-agent-sdk" ]; then
+    echo "[install-test] FAIL: $DATA_FALLBACK/node_modules/@anthropic-ai/claude-agent-sdk missing — npm install did not bring SDK"
     exit 1
 fi
+# Critical: the symlink-into-ROOT branch must have run so default ESM
+# resolution can find the deps from dist/cli/index.js.
+if [ ! -L "$DEST/node_modules" ] || [ ! -e "$DEST/node_modules/@anthropic-ai/claude-agent-sdk" ]; then
+    echo "[install-test] FAIL: $DEST/node_modules symlink missing/broken — the bug we shipped in v0.0.4"
+    ls -la "$DEST/node_modules" 2>&1 >&2 || true
+    exit 1
+fi
+DATA="$DATA_FALLBACK"
 
 # 5. Fire the hook with sample stdin. With Neo4j skipped, the cold-start UX
 #    branch will detect "down" and emit a friendly notification (passthrough

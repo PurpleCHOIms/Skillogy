@@ -20,6 +20,7 @@ export interface UserState {
   notifiedNeo4jDown?: boolean;
   notifiedIndexingPending?: boolean;
   notifiedDockerMissing?: boolean;
+  notifiedAuthMismatch?: boolean;
   dockerMissing?: boolean;
 }
 
