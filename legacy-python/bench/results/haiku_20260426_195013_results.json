@@ -1,0 +1,694 @@
+{
+  "traces": [
+    {
+      "id": "context-degradation-0",
+      "query": "I want to implement context compaction and observation masking. Relevant tech: context confusion, attention sink, claude opus 4.5, context distraction, gpt-5.2.",
+      "gold": "context-degradation",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 17558.62713800161
+    },
+    {
+      "id": "context-fundamentals-0",
+      "query": "I want to structure system prompts for better agent performance. Relevant tech: attention mechanism, context window, progressive disclosure, claude.md, tool definition.",
+      "gold": "context-fundamentals",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 17793.64760000317
+    },
+    {
+      "id": "advanced-evaluation-0",
+      "query": "I want to fix position bias in my pairwise comparison prompt. Relevant tech: rubric generation, mt-bench, position bias, spearman's ρ, cohen's κ.",
+      "gold": "advanced-evaluation",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 18719.36859599373
+    },
+    {
+      "id": "context-compression-0",
+      "query": "I want to reduce token usage without losing context. Relevant tech: rouge, regenerative full summary, tokens-per-task, context compression, sliding window.",
+      "gold": "context-compression",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 20042.883485002676
+    },
+    {
+      "id": "bdi-mental-states-0",
+      "query": "I want to model belief desire intention for multi-agent systems. Relevant tech: fipa acl, logic augmented generation, cognitive architecture, dolce ontology, t2b2t.",
+      "gold": "bdi-mental-states",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 20994.829246003064
+    },
+    {
+      "id": "context-optimization-0",
+      "query": "I want to reorder prompt elements to maximize cache hits. Relevant tech: context partitioning, token costs, context budget, prefix caching, context optimization.",
+      "gold": "context-optimization",
+      "condition": "claude_native",
+      "picked": "claude-api",
+      "top_k": [
+        "claude-api"
+      ],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 14991.578908004158
+    },
+    {
+      "id": "deep-agents-orchestration-0",
+      "query": "I want to create a specialized subagent. Relevant tech: subagentmiddleware, subagent, humanintheloopmiddleware, __interrupt__, create_deep_agent.",
+      "gold": "deep-agents-orchestration",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 22264.615115003835
+    },
+    {
+      "id": "deep-agents-memory-0",
+      "query": "I want to sandbox agent local disk access securely. Relevant tech: storebackend, statebackend, postgresstore, create_deep_agent, thread_id.",
+      "gold": "deep-agents-memory",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 25934.378302998084
+    },
+    {
+      "id": "devex-review-0",
+      "query": "I want to test the cli help text and error messages. Relevant tech: dx audit, tthw, time to hello world, onboarding, getting started.",
+      "gold": "devex-review",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 26502.896063000662
+    },
+    {
+      "id": "framework-selection-0",
+      "query": "I want to choose between langchain and langgraph. Relevant tech: agent architecture, langchain, lcel, deep agents, framework selection.",
+      "gold": "framework-selection",
+      "condition": "claude_native",
+      "picked": "framework-selection",
+      "top_k": [
+        "framework-selection"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 13375.13565900008
+    },
+    {
+      "id": "filesystem-context-0",
+      "query": "I want to keep track of long-horizon agent plans in files. Relevant tech: just-in-time context, tool output persistence, scratch pad, sub-agent communication, dynamic skill loading.",
+      "gold": "filesystem-context",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 18138.698356000532
+    },
+    {
+      "id": "hosted-agents-0",
+      "query": "I want to configure github auth for agent commits on behalf of users. Relevant tech: sandboxed execution, predictive warm-up, agent infrastructure, hosted agents, per-session state.",
+      "gold": "hosted-agents",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 17611.04977499781
+    },
+    {
+      "id": "evaluation-0",
+      "query": "I want to implement llm-as-a-judge scoring. Relevant tech: multi-dimensional rubric, end-state evaluation, factual accuracy, tool efficiency, llm-as-judge.",
+      "gold": "evaluation",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 34032.325758002116
+    },
+    {
+      "id": "langchain-fundamentals-0",
+      "query": "I want to extract typed data using with_structured_output. Relevant tech: createagent, create_agent, withstructuredoutput, langchain, humanintheloopmiddleware.",
+      "gold": "langchain-fundamentals",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 16827.211905001604
+    },
+    {
+      "id": "deep-agents-core-0",
+      "query": "I want to debug agent forgetting conversation context. Relevant tech: agents.md, write_todos, skill.md, subagentmiddleware, interrupt_on.",
+      "gold": "deep-agents-core",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 57524.98015099991
+    },
+    {
+      "id": "langchain-middleware-0",
+      "query": "I want to edit tool arguments before the agent runs them. Relevant tech: human in the loop, middleware, __interrupt__, thread_id, hitl.",
+      "gold": "langchain-middleware",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 19135.643498004356
+    },
+    {
+      "id": "langgraph-fundamentals-0",
+      "query": "I want to build a stateful agent workflow with langgraph. Relevant tech: stategraph, add_conditional_edges, langgraph send, addconditionaledges, langgraph command.",
+      "gold": "langgraph-fundamentals",
+      "condition": "claude_native",
+      "picked": "langgraph-fundamentals",
+      "top_k": [
+        "langgraph-fundamentals"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 14566.18316499953
+    },
+    {
+      "id": "langchain-rag-0",
+      "query": "I want to improve retrieval results with mmr. Relevant tech: faiss, mmr, allow_dangerous_deserialization, pypdfloader, recursivecharactertextsplitter.",
+      "gold": "langchain-rag",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 20802.406796996365
+    },
+    {
+      "id": "langgraph-persistence-0",
+      "query": "I want to resume langgraph execution from a past checkpoint. Relevant tech: updatestate, update_state, langgraph store, checkpointer, get_state_history.",
+      "gold": "langgraph-persistence",
+      "condition": "claude_native",
+      "picked": "langgraph-persistence",
+      "top_k": [
+        "langgraph-persistence"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 13152.313004997268
+    },
+    {
+      "id": "langsmith-trace-0",
+      "query": "I want to trace openai calls in typescript. Relevant tech: wrapopenai, langsmith_api_key, langsmith_tracing, langsmith, langsmith_project.",
+      "gold": "langsmith-trace",
+      "condition": "claude_native",
+      "picked": "langsmith-trace",
+      "top_k": [
+        "langsmith-trace"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 11390.697312002885
+    },
+    {
+      "id": "langsmith-evaluator-0",
+      "query": "I want to run batch evaluations against a langsmith dataset. Relevant tech: trajectory evaluation, langsmith/evaluation, llm-as-judge, openevals, offline evaluator.",
+      "gold": "langsmith-evaluator",
+      "condition": "claude_native",
+      "picked": "langsmith-evaluator",
+      "top_k": [
+        "langsmith-evaluator"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 16215.836415998638
+    },
+    {
+      "id": "langgraph-human-in-the-loop-0",
+      "query": "I want to make side effects idempotent before interrupt. Relevant tech: command, __interrupt__, thread_id, isinterrupted, postgressaver.",
+      "gold": "langgraph-human-in-the-loop",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 25167.155744005868
+    },
+    {
+      "id": "memory-systems-0",
+      "query": "I want to build a temporal knowledge graph for entity tracking. Relevant tech: cross-session, agent memory, locomo, hotpotqa, memory consolidation.",
+      "gold": "memory-systems",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 16705.06036200095
+    },
+    {
+      "id": "multi-agent-patterns-0",
+      "query": "I want to implement debate protocols between llms. Relevant tech: crewai, multi-agent, autogen, swarm architecture, telephone game.",
+      "gold": "multi-agent-patterns",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 20900.0615210025
+    },
+    {
+      "id": "openui-0",
+      "query": "I want to define a component library for openui lang. Relevant tech: generative ui, @openuidev/react-ui, @openuidev/react-lang, openui, library.prompt().",
+      "gold": "openui",
+      "condition": "claude_native",
+      "picked": "openui",
+      "top_k": [
+        "openui"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 18550.180177000584
+    },
+    {
+      "id": "project-development-0",
+      "query": "I want to design structured outputs for programmatic parsing. Relevant tech: file system state, structured output, manual prototype, cost estimation, agent-assisted development.",
+      "gold": "project-development",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 15445.34003699664
+    },
+    {
+      "id": "ralph-0",
+      "query": "I want to implement a multi-step task with persistent retries. Relevant tech: --no-prd, --critic, acceptance criteria, ultrawork, deslop.",
+      "gold": "ralph",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 14782.957673000055
+    },
+    {
+      "id": "ultrawork-0",
+      "query": "I want to execute independent tasks simultaneously. Relevant tech: oh-my-claudecode:executor, opus, subagent_type, ulw, concurrent execution.",
+      "gold": "ultrawork",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 16536.03623300296
+    },
+    {
+      "id": "tool-design-0",
+      "query": "I want to consolidate multiple agent tools into one. Relevant tech: architectural reduction, agent tools, tool descriptions, function calling, file system agent pattern.",
+      "gold": "tool-design",
+      "condition": "claude_native",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 29526.18924499984
+    },
+    {
+      "id": "context-compression-0",
+      "query": "I want to reduce token usage without losing context. Relevant tech: rouge, regenerative full summary, tokens-per-task, context compression, sliding window.",
+      "gold": "context-compression",
+      "condition": "claude_hook",
+      "picked": "context-compression",
+      "top_k": [
+        "context-compression"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 23056.439635998686
+    },
+    {
+      "id": "bdi-mental-states-0",
+      "query": "I want to model belief desire intention for multi-agent systems. Relevant tech: fipa acl, logic augmented generation, cognitive architecture, dolce ontology, t2b2t.",
+      "gold": "bdi-mental-states",
+      "condition": "claude_hook",
+      "picked": "bdi-mental-states",
+      "top_k": [
+        "bdi-mental-states"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 26279.766958003165
+    },
+    {
+      "id": "advanced-evaluation-0",
+      "query": "I want to fix position bias in my pairwise comparison prompt. Relevant tech: rubric generation, mt-bench, position bias, spearman's ρ, cohen's κ.",
+      "gold": "advanced-evaluation",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 27003.725614995346
+    },
+    {
+      "id": "context-fundamentals-0",
+      "query": "I want to structure system prompts for better agent performance. Relevant tech: attention mechanism, context window, progressive disclosure, claude.md, tool definition.",
+      "gold": "context-fundamentals",
+      "condition": "claude_hook",
+      "picked": "context-fundamentals",
+      "top_k": [
+        "context-fundamentals"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 25950.06162700156
+    },
+    {
+      "id": "context-optimization-0",
+      "query": "I want to reorder prompt elements to maximize cache hits. Relevant tech: context partitioning, token costs, context budget, prefix caching, context optimization.",
+      "gold": "context-optimization",
+      "condition": "claude_hook",
+      "picked": "context-optimization",
+      "top_k": [
+        "context-optimization"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 28692.00389100297
+    },
+    {
+      "id": "context-degradation-0",
+      "query": "I want to implement context compaction and observation masking. Relevant tech: context confusion, attention sink, claude opus 4.5, context distraction, gpt-5.2.",
+      "gold": "context-degradation",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 32728.597754001385
+    },
+    {
+      "id": "deep-agents-memory-0",
+      "query": "I want to sandbox agent local disk access securely. Relevant tech: storebackend, statebackend, postgresstore, create_deep_agent, thread_id.",
+      "gold": "deep-agents-memory",
+      "condition": "claude_hook",
+      "picked": "deep-agents-memory",
+      "top_k": [
+        "deep-agents-memory"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 28023.927602000185
+    },
+    {
+      "id": "deep-agents-orchestration-0",
+      "query": "I want to create a specialized subagent. Relevant tech: subagentmiddleware, subagent, humanintheloopmiddleware, __interrupt__, create_deep_agent.",
+      "gold": "deep-agents-orchestration",
+      "condition": "claude_hook",
+      "picked": "deep-agents-core",
+      "top_k": [
+        "deep-agents-core"
+      ],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 29670.437348999258
+    },
+    {
+      "id": "evaluation-0",
+      "query": "I want to implement llm-as-a-judge scoring. Relevant tech: multi-dimensional rubric, end-state evaluation, factual accuracy, tool efficiency, llm-as-judge.",
+      "gold": "evaluation",
+      "condition": "claude_hook",
+      "picked": "evaluation",
+      "top_k": [
+        "evaluation"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 27013.0584169965
+    },
+    {
+      "id": "deep-agents-core-0",
+      "query": "I want to debug agent forgetting conversation context. Relevant tech: agents.md, write_todos, skill.md, subagentmiddleware, interrupt_on.",
+      "gold": "deep-agents-core",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 61077.271431000554
+    },
+    {
+      "id": "devex-review-0",
+      "query": "I want to test the cli help text and error messages. Relevant tech: dx audit, tthw, time to hello world, onboarding, getting started.",
+      "gold": "devex-review",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 29902.60750199377
+    },
+    {
+      "id": "framework-selection-0",
+      "query": "I want to choose between langchain and langgraph. Relevant tech: agent architecture, langchain, lcel, deep agents, framework selection.",
+      "gold": "framework-selection",
+      "condition": "claude_hook",
+      "picked": "framework-selection",
+      "top_k": [
+        "framework-selection"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 22547.591243004717
+    },
+    {
+      "id": "hosted-agents-0",
+      "query": "I want to configure github auth for agent commits on behalf of users. Relevant tech: sandboxed execution, predictive warm-up, agent infrastructure, hosted agents, per-session state.",
+      "gold": "hosted-agents",
+      "condition": "claude_hook",
+      "picked": "hosted-agents",
+      "top_k": [
+        "hosted-agents"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 29333.162252005422
+    },
+    {
+      "id": "filesystem-context-0",
+      "query": "I want to keep track of long-horizon agent plans in files. Relevant tech: just-in-time context, tool output persistence, scratch pad, sub-agent communication, dynamic skill loading.",
+      "gold": "filesystem-context",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 30575.13965399994
+    },
+    {
+      "id": "langchain-fundamentals-0",
+      "query": "I want to extract typed data using with_structured_output. Relevant tech: createagent, create_agent, withstructuredoutput, langchain, humanintheloopmiddleware.",
+      "gold": "langchain-fundamentals",
+      "condition": "claude_hook",
+      "picked": "langchain-fundamentals",
+      "top_k": [
+        "langchain-fundamentals"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 23920.420677000948
+    },
+    {
+      "id": "langchain-rag-0",
+      "query": "I want to improve retrieval results with mmr. Relevant tech: faiss, mmr, allow_dangerous_deserialization, pypdfloader, recursivecharactertextsplitter.",
+      "gold": "langchain-rag",
+      "condition": "claude_hook",
+      "picked": "langchain-rag",
+      "top_k": [
+        "langchain-rag"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 22959.763913000643
+    },
+    {
+      "id": "langchain-middleware-0",
+      "query": "I want to edit tool arguments before the agent runs them. Relevant tech: human in the loop, middleware, __interrupt__, thread_id, hitl.",
+      "gold": "langchain-middleware",
+      "condition": "claude_hook",
+      "picked": "langchain-middleware",
+      "top_k": [
+        "langchain-middleware"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 23396.08398499695
+    },
+    {
+      "id": "langgraph-fundamentals-0",
+      "query": "I want to build a stateful agent workflow with langgraph. Relevant tech: stategraph, add_conditional_edges, langgraph send, addconditionaledges, langgraph command.",
+      "gold": "langgraph-fundamentals",
+      "condition": "claude_hook",
+      "picked": "langgraph-fundamentals",
+      "top_k": [
+        "langgraph-fundamentals"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 22981.197173998225
+    },
+    {
+      "id": "langgraph-persistence-0",
+      "query": "I want to resume langgraph execution from a past checkpoint. Relevant tech: updatestate, update_state, langgraph store, checkpointer, get_state_history.",
+      "gold": "langgraph-persistence",
+      "condition": "claude_hook",
+      "picked": "langgraph-persistence",
+      "top_k": [
+        "langgraph-persistence"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 26520.240812998964
+    },
+    {
+      "id": "langgraph-human-in-the-loop-0",
+      "query": "I want to make side effects idempotent before interrupt. Relevant tech: command, __interrupt__, thread_id, isinterrupted, postgressaver.",
+      "gold": "langgraph-human-in-the-loop",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 32655.10768599779
+    },
+    {
+      "id": "langsmith-evaluator-0",
+      "query": "I want to run batch evaluations against a langsmith dataset. Relevant tech: trajectory evaluation, langsmith/evaluation, llm-as-judge, openevals, offline evaluator.",
+      "gold": "langsmith-evaluator",
+      "condition": "claude_hook",
+      "picked": "langsmith-evaluator",
+      "top_k": [
+        "langsmith-evaluator"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 26217.061904993898
+    },
+    {
+      "id": "langsmith-trace-0",
+      "query": "I want to trace openai calls in typescript. Relevant tech: wrapopenai, langsmith_api_key, langsmith_tracing, langsmith, langsmith_project.",
+      "gold": "langsmith-trace",
+      "condition": "claude_hook",
+      "picked": "langsmith-trace",
+      "top_k": [
+        "langsmith-trace"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 27390.13180499751
+    },
+    {
+      "id": "memory-systems-0",
+      "query": "I want to build a temporal knowledge graph for entity tracking. Relevant tech: cross-session, agent memory, locomo, hotpotqa, memory consolidation.",
+      "gold": "memory-systems",
+      "condition": "claude_hook",
+      "picked": "memory-systems",
+      "top_k": [
+        "memory-systems"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 27700.039855997602
+    },
+    {
+      "id": "multi-agent-patterns-0",
+      "query": "I want to implement debate protocols between llms. Relevant tech: crewai, multi-agent, autogen, swarm architecture, telephone game.",
+      "gold": "multi-agent-patterns",
+      "condition": "claude_hook",
+      "picked": "multi-agent-patterns",
+      "top_k": [
+        "multi-agent-patterns"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 28676.28853399947
+    },
+    {
+      "id": "openui-0",
+      "query": "I want to define a component library for openui lang. Relevant tech: generative ui, @openuidev/react-ui, @openuidev/react-lang, openui, library.prompt().",
+      "gold": "openui",
+      "condition": "claude_hook",
+      "picked": "openui",
+      "top_k": [
+        "openui"
+      ],
+      "correct": true,
+      "input_tokens": 0,
+      "latency_ms": 23719.22320000158
+    },
+    {
+      "id": "project-development-0",
+      "query": "I want to design structured outputs for programmatic parsing. Relevant tech: file system state, structured output, manual prototype, cost estimation, agent-assisted development.",
+      "gold": "project-development",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 25521.952102993964
+    },
+    {
+      "id": "ralph-0",
+      "query": "I want to implement a multi-step task with persistent retries. Relevant tech: --no-prd, --critic, acceptance criteria, ultrawork, deslop.",
+      "gold": "ralph",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 33103.75101400132
+    },
+    {
+      "id": "ultrawork-0",
+      "query": "I want to execute independent tasks simultaneously. Relevant tech: oh-my-claudecode:executor, opus, subagent_type, ulw, concurrent execution.",
+      "gold": "ultrawork",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 25772.69971399801
+    },
+    {
+      "id": "tool-design-0",
+      "query": "I want to consolidate multiple agent tools into one. Relevant tech: architectural reduction, agent tools, tool descriptions, function calling, file system agent pattern.",
+      "gold": "tool-design",
+      "condition": "claude_hook",
+      "picked": "",
+      "top_k": [],
+      "correct": false,
+      "input_tokens": 0,
+      "latency_ms": 35032.57169900462
+    }
+  ]
+}

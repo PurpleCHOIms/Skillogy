@@ -1,0 +1,22 @@
+[
+  {
+    "condition": "claude_native",
+    "n": 29,
+    "trigger_accuracy": 0.4827586206896552,
+    "trigger_accuracy_ci_low": 0.3103448275862069,
+    "trigger_accuracy_ci_high": 0.6551724137931034,
+    "recall_at_5": 0.4827586206896552,
+    "mean_input_tokens": 0.0,
+    "p95_latency_ms": 60930.75671699626
+  },
+  {
+    "condition": "claude_hook",
+    "n": 29,
+    "trigger_accuracy": 1.0,
+    "trigger_accuracy_ci_low": 1.0,
+    "trigger_accuracy_ci_high": 1.0,
+    "recall_at_5": 1.0,
+    "mean_input_tokens": 0.0,
+    "p95_latency_ms": 28778.64933700039
+  }
+]
