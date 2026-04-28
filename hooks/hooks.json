@@ -1,0 +1,28 @@
+{
+  "description": "Skillogy: SessionStart bootstraps Neo4j + builds TS + incremental indexing. UserPromptSubmit injects skill hint via GraphRAG router.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/skillogy-bootstrap.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/skillogy-hook.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

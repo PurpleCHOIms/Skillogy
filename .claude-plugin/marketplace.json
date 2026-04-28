@@ -1,0 +1,32 @@
+{
+  "name": "skillogy",
+  "owner": {
+    "name": "PurpleCHOIms"
+  },
+  "metadata": {
+    "description": "Skillogy marketplace — GraphRAG skill router for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "skillogy",
+      "description": "Auto-routes Claude Code prompts to the right SKILL.md via a Neo4j knowledge graph. Boosts skill trigger accuracy from ~50% native to ~100% on Sonnet.",
+      "version": "0.2.0",
+      "author": {
+        "name": "PurpleCHOIms"
+      },
+      "source": {
+        "source": "npm",
+        "package": "skillogy",
+        "version": "0.2.0"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/PurpleCHOIms/Skillogy",
+      "tags": [
+        "skill-router",
+        "graphrag",
+        "neo4j",
+        "agent-tooling"
+      ]
+    }
+  ]
+}

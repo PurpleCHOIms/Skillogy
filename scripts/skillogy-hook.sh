@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # UserPromptSubmit hook wrapper — invoked by Claude Code per turn.
-# Reads prompt JSON from stdin, emits additionalContext JSON to stdout.
-# Adjust SKILLOGY_ROOT if the project lives elsewhere.
+# Reads prompt JSON from stdin, emits hookSpecificOutput.additionalContext on stdout.
 
 set -e
-ROOT="${SKILLOGY_ROOT:-/home/catow/GIT/Hackathon}"
-echo "[HOOK FIRED] $(date '+%H:%M:%S') cwd=$PWD" >> /tmp/skill-router-hook.log
+ROOT="${SKILLOGY_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(pwd)}}"
+LOG_DIR="${SKILLOGY_LOG_DIR:-/tmp/skillogy}"
+mkdir -p "$LOG_DIR"
 
-# Load LLM credentials from .env so we don't depend on the parent shell
+# Load .env so we don't depend on the parent shell
 if [ -f "$ROOT/.env" ]; then
     set -a
     # shellcheck disable=SC1090
@@ -15,8 +15,15 @@ if [ -f "$ROOT/.env" ]; then
     set +a
 fi
 
-# Use claude-agent-sdk (OAuth from Claude Code) — no LLM API key needed
-unset ANTHROPIC_API_KEY GOOGLE_API_KEY
+# Default to Claude Agent SDK (OAuth from Claude Code) — no LLM API key needed
 export SKILLOGY_LLM="${SKILLOGY_LLM:-sdk}"
 
-exec "$ROOT/.venv/bin/python" -m skillogy.adapters.hook
+HOOK_ENTRY="$ROOT/dist/adapters/hook.js"
+if [ ! -f "$HOOK_ENTRY" ]; then
+    # First-run guard: if dist/ missing, emit passthrough rather than crashing the prompt
+    echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":""}}'
+    echo "[skillogy-hook] dist/ not built yet — passthrough" >> "$LOG_DIR/hook.log"
+    exit 0
+fi
+
+exec node "$HOOK_ENTRY"
