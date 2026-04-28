@@ -38,34 +38,42 @@ if [ ! -f "$DEST/dist/adapters/hook.js" ]; then
 fi
 echo "[install-test] dist/adapters/hook.js present ($(wc -c <"$DEST/dist/adapters/hook.js") bytes)"
 
-# 4. Run bootstrap with services skipped — must be fast and not require npm install.
+# 4. Run bootstrap with services skipped. With deps externalized from the
+#    bundle, bootstrap now runs `npm install` into a separate DATA dir to
+#    populate node_modules (including @anthropic-ai/claude-agent-sdk's
+#    platform-specific native binaries). This is slower than v0.0.3 but
+#    matches the official Claude Code plugin pattern and is bounded.
 START=$(date +%s)
-SKILLOGY_SKIP_NEO4J=1 SKILLOGY_SKIP_INDEX=1 \
+DATA="$DEST/.skillogy-data"
+SKILLOGY_DATA="$DATA" SKILLOGY_SKIP_NEO4J=1 SKILLOGY_SKIP_INDEX=1 \
     SKILLOGY_LOG_DIR="$DEST/.logs" \
     bash "$DEST/scripts/skillogy-bootstrap.sh" >/dev/null 2>&1 || {
     echo "[install-test] FAIL: bootstrap exited non-zero"
+    cat "$DEST/.logs/install.log" 2>/dev/null | tail -10 >&2 || true
     exit 1
 }
 ELAPSED=$(( $(date +%s) - START ))
-echo "[install-test] bootstrap took ${ELAPSED}s"
+echo "[install-test] bootstrap took ${ELAPSED}s (includes npm install in DATA)"
 
-if [ "$ELAPSED" -gt 15 ]; then
-    echo "[install-test] FAIL: bootstrap took ${ELAPSED}s (>15s) — bundles probably not in tarball"
+if [ "$ELAPSED" -gt 120 ]; then
+    echo "[install-test] FAIL: bootstrap took ${ELAPSED}s (>120s)"
     exit 1
 fi
-if [ -d "$DEST/node_modules" ]; then
-    echo "[install-test] FAIL: node_modules was created — bundles should make npm install unnecessary"
+if [ ! -d "$DATA/node_modules/@anthropic-ai/claude-agent-sdk" ]; then
+    echo "[install-test] FAIL: $DATA/node_modules/@anthropic-ai/claude-agent-sdk missing — npm install did not bring SDK"
     exit 1
 fi
 
 # 5. Fire the hook with sample stdin. With Neo4j skipped, the cold-start UX
 #    branch will detect "down" and emit a friendly notification (passthrough
 #    is also acceptable — both are valid hookSpecificOutput shapes).
+#    SKILLOGY_DATA must be honored so the hook sets NODE_PATH correctly.
 SAMPLE='{"prompt":"build a rag system","hook_event_name":"UserPromptSubmit","session_id":"test"}'
 HOOK_OUT=$(echo "$SAMPLE" | XDG_STATE_HOME="$DEST/.state" \
+    SKILLOGY_DATA="$DATA" \
     NEO4J_URI=bolt://localhost:1 \
     SKILLOGY_HEALTH_PROBE_MS=300 \
-    timeout 10 node "$DEST/dist/adapters/hook.js" 2>"$DEST/.logs/hook.stderr" || echo "TIMEOUT")
+    timeout 15 bash "$DEST/scripts/skillogy-hook.sh" 2>"$DEST/.logs/hook.stderr" || echo "TIMEOUT")
 if [ "$HOOK_OUT" = "TIMEOUT" ]; then
     echo "[install-test] FAIL: hook timed out (>10s)"
     cat "$DEST/.logs/hook.stderr" >&2

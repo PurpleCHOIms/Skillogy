@@ -26,10 +26,10 @@ Save as `MODE`.
 ### Step 3 — Run
 
 If `MODE == incremental`:
-!`node "${CLAUDE_PLUGIN_ROOT}/dist/cli/index.js" index --incremental --workers 8 --scopes "<SCOPE>"`
+!`bash "${CLAUDE_PLUGIN_ROOT}/scripts/skillogy-cli.sh" index --incremental --workers 8 --scopes "<SCOPE>"`
 
 If `MODE == full`:
-!`node "${CLAUDE_PLUGIN_ROOT}/dist/cli/index.js" index --workers 8 --scopes "<SCOPE>"`
+!`bash "${CLAUDE_PLUGIN_ROOT}/scripts/skillogy-cli.sh" index --workers 8 --scopes "<SCOPE>"`
 
 (Replace `<SCOPE>` with the user's choice from Step 1.)
 

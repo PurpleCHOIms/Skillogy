@@ -15,11 +15,18 @@
 //   subprocess (`claude`) provided by Claude Code itself, not by node_modules,
 //   so bundling the SDK wrapper is fine.
 import { build } from "esbuild";
-import { mkdirSync, statSync } from "node:fs";
+import { mkdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf-8"));
+
+// External-mark every runtime dependency. The plugin runtime needs them
+// resolved from ${CLAUDE_PLUGIN_DATA}/node_modules at runtime via NODE_PATH —
+// inlining @anthropic-ai/claude-agent-sdk in particular breaks because esbuild
+// can't bundle the optional native .node binaries.
+const externals = Object.keys(pkg.dependencies ?? {});
 
 const entries = [
   { in: "src/cli/index.ts",          out: "dist/cli/index.js"           },
@@ -43,6 +50,7 @@ const builds = entries.map(async (e) => {
     minify: process.env.SKILLOGY_BUILD_MINIFY === "1",
     legalComments: "none",
     logLevel: "warning",
+    external: externals,
     banner: {
       // Provide require() inside ESM so transitively-bundled CJS deps
       // (neo4j-driver internals, etc.) keep working under --format=esm.

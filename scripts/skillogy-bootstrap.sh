@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
 # Skillogy SessionStart bootstrap.
-# Idempotent: ensures node_modules + dist + Neo4j are ready, then triggers incremental indexing.
+# Idempotent: ensures the plugin's npm dependencies are installed in
+# ${CLAUDE_PLUGIN_DATA}/node_modules, brings up Neo4j, and kicks off
+# incremental indexing in the background.
+#
+# This follows the official Claude Code plugin pattern — the bundled dist/
+# under ${CLAUDE_PLUGIN_ROOT} is small (esbuild only inlines our own source;
+# every runtime dependency is external). Deps are persisted in
+# ${CLAUDE_PLUGIN_DATA} so they survive plugin updates and so native binary
+# packages (e.g. @anthropic-ai/claude-agent-sdk's platform-specific .node
+# files, which esbuild cannot bundle) resolve correctly via NODE_PATH.
 #
 # Honors:
-#   SKILLOGY_ROOT             → repo root (default: ${CLAUDE_PLUGIN_ROOT} or pwd)
+#   SKILLOGY_ROOT             → repo root (default: ${CLAUDE_PLUGIN_ROOT}, then script's parent dir)
+#   SKILLOGY_DATA             → persistent dep dir (default: ${CLAUDE_PLUGIN_DATA}, then $ROOT/.skillogy-data)
 #   SKILLOGY_SKIP_BOOTSTRAP=1 → no-op
 #   SKILLOGY_SKIP_NEO4J=1     → skip Neo4j docker bringup
 #   SKILLOGY_SKIP_INDEX=1     → skip background indexing
-#   SKILLOGY_SKIP_BUILD=1     → skip npm install + bundle build
-#   SKILLOGY_DEV=1            → force rebuild from source (dev workflow); without
-#                               this, bundled dist/ shipped in the repo is used
-#                               and node_modules is not required at runtime
+#   SKILLOGY_SKIP_INSTALL=1   → skip npm install in DATA
+#   SKILLOGY_DEV=1            → also rebuild dist/ from source (requires source checkout)
 
 set -e
 
@@ -18,17 +26,11 @@ if [ "${SKILLOGY_SKIP_BOOTSTRAP:-}" = "1" ]; then
     exit 0
 fi
 
-# Derive ROOT in this priority:
-#   1. SKILLOGY_ROOT  — explicit override
-#   2. CLAUDE_PLUGIN_ROOT — set by Claude Code when invoked from a hook
-#   3. The script's own parent dir — works even when this script is run
-#      directly from a slash command's `!` block where the env var is not
-#      propagated into the subshell. Falling back to $(pwd) here would point
-#      at the user's working directory, which has no dist/ or package.json.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${SKILLOGY_ROOT:-${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}}"
+DATA="${SKILLOGY_DATA:-${CLAUDE_PLUGIN_DATA:-$ROOT/.skillogy-data}}"
 LOG_DIR="${SKILLOGY_LOG_DIR:-/tmp/skillogy}"
-mkdir -p "$LOG_DIR"
+mkdir -p "$LOG_DIR" "$DATA"
 
 log() { echo "[skillogy-bootstrap] $*" >&2; }
 err() { echo "[skillogy-bootstrap] ERROR: $*" >&2; }
@@ -45,58 +47,71 @@ fi
 if ! command -v docker >/dev/null; then
     log "WARNING: docker not found — Neo4j auto-start will be skipped."
     log "  Install Docker, or start Neo4j yourself on bolt://localhost:7687"
-    # Surface this to the hook so the user sees a one-time actionable message
-    node "$ROOT/scripts/state-set.mjs" docker-missing 1 2>/dev/null || true
+    node "$SCRIPT_DIR/state-set.mjs" docker-missing 1 2>/dev/null || true
 else
-    # Docker is available — clear any prior docker-missing flag the hook left
-    node "$ROOT/scripts/state-set.mjs" docker-missing 0 2>/dev/null || true
+    node "$SCRIPT_DIR/state-set.mjs" docker-missing 0 2>/dev/null || true
 fi
 
-# Load .env
+# Load .env (dev workflow only — published plugin doesn't ship one)
 if [ -f "$ROOT/.env" ]; then
     set -a; source "$ROOT/.env"; set +a
 fi
 
-# 1. node_modules + dist
-#
-# In OSS install path the repo ships pre-bundled dist/ (esbuild --bundle inlines
-# every npm dep), so node_modules is NOT required at runtime. We only run
-# npm install + build when:
-#   (a) bundled dist/ entrypoints are missing (broken checkout / dev clone), OR
-#   (b) the developer opts in via SKILLOGY_DEV=1 to use source-edit workflow
-have_bundles() {
-    [ -f "$ROOT/dist/cli/index.js" ] && [ -f "$ROOT/dist/adapters/hook.js" ] \
-        && [ -f "$ROOT/dist/adapters/mcp_server.js" ] && [ -f "$ROOT/dist/adapters/web_api.js" ]
-}
-
-if [ "${SKILLOGY_SKIP_BUILD:-}" != "1" ]; then
-    needs_build=0
-    if ! have_bundles; then
-        needs_build=1
-    fi
-    if [ "${SKILLOGY_DEV:-}" = "1" ]; then
-        needs_build=1
-    fi
-
-    if [ "$needs_build" = "1" ]; then
-        if [ ! -d "$ROOT/node_modules" ]; then
-            log "Installing node_modules (npm install) — see $LOG_DIR/install.log"
-            (cd "$ROOT" && npm install) >>"$LOG_DIR/install.log" 2>&1 || {
-                err "npm install failed — see $LOG_DIR/install.log"
-                exit 1
-            }
-        fi
-        log "Building bundles (npm run build) — see $LOG_DIR/build.log"
-        (cd "$ROOT" && npm run build) >>"$LOG_DIR/build.log" 2>&1 || {
-            err "npm run build failed — see $LOG_DIR/build.log"
+# 1. Optional dev rebuild from source.
+if [ "${SKILLOGY_DEV:-}" = "1" ] && [ -f "$ROOT/scripts/build.mjs" ]; then
+    if [ ! -d "$ROOT/node_modules" ]; then
+        log "[dev] Installing devDependencies for source build → $LOG_DIR/install.log"
+        (cd "$ROOT" && npm install) >>"$LOG_DIR/install.log" 2>&1 || {
+            err "[dev] npm install in $ROOT failed — see $LOG_DIR/install.log"
             exit 1
         }
-    else
-        log "Bundles present — skipping npm install + build (set SKILLOGY_DEV=1 to force rebuild)"
+    fi
+    log "[dev] Rebuilding bundles → $LOG_DIR/build.log"
+    (cd "$ROOT" && npm run build) >>"$LOG_DIR/build.log" 2>&1 || {
+        err "[dev] npm run build failed — see $LOG_DIR/build.log"
+        exit 1
+    }
+fi
+
+# 2. Sync the plugin's runtime npm dependencies into ${CLAUDE_PLUGIN_DATA}.
+#    Only re-run npm install when package.json differs from the cached copy
+#    (the official Claude Code plugin pattern).
+if [ "${SKILLOGY_SKIP_INSTALL:-}" != "1" ]; then
+    if ! diff -q "$ROOT/package.json" "$DATA/package.json" >/dev/null 2>&1; then
+        log "Installing plugin dependencies → $DATA/node_modules (see $LOG_DIR/install.log)"
+        cp "$ROOT/package.json" "$DATA/"
+        # npm install honors optionalDependencies (needed for claude-agent-sdk
+        # platform-specific .node binaries) and skips devDependencies.
+        if (cd "$DATA" && npm install --omit=dev --no-audit --no-fund) >>"$LOG_DIR/install.log" 2>&1; then
+            log "Dependencies installed."
+        else
+            err "npm install in $DATA failed — see $LOG_DIR/install.log"
+            rm -f "$DATA/package.json"
+            exit 1
+        fi
     fi
 fi
 
-# 2. Neo4j
+# Make node_modules visible to default Node ESM resolution. Node walks UP
+# from the importing file, so ${ROOT}/node_modules must resolve to the deps
+# in DATA. Symlink, don't copy — copying breaks update semantics. NODE_PATH
+# alone wouldn't suffice because Node ignores it for ESM imports.
+if [ -d "$DATA/node_modules" ]; then
+    if [ -L "$ROOT/node_modules" ]; then
+        # Existing symlink — refresh to current DATA target if drifted
+        if [ "$(readlink "$ROOT/node_modules")" != "$DATA/node_modules" ]; then
+            rm -f "$ROOT/node_modules"
+            ln -s "$DATA/node_modules" "$ROOT/node_modules"
+        fi
+    elif [ ! -e "$ROOT/node_modules" ]; then
+        ln -s "$DATA/node_modules" "$ROOT/node_modules"
+    fi
+    # If $ROOT/node_modules is a real directory, leave it alone — that's a dev
+    # checkout where the developer ran `npm install` against source.
+fi
+export NODE_PATH="$DATA/node_modules${NODE_PATH:+:$NODE_PATH}"
+
+# 3. Neo4j
 need_neo4j_up() {
     ! curl -s -o /dev/null -m 1 http://localhost:7474
 }
@@ -111,9 +126,9 @@ elif [ "${SKILLOGY_SKIP_NEO4J:-}" != "1" ]; then
     log "Neo4j already up on :7474"
 fi
 
-# 3. Incremental indexing (background)
+# 4. Incremental indexing (background).
 if [ "${SKILLOGY_SKIP_INDEX:-}" != "1" ]; then
-    # Wait briefly for Neo4j bolt
+    # Wait briefly for Neo4j bolt before forking the indexer.
     for _ in $(seq 1 20); do
         curl -s -o /dev/null -m 1 http://localhost:7474 && break
         sleep 1
@@ -125,5 +140,5 @@ if [ "${SKILLOGY_SKIP_INDEX:-}" != "1" ]; then
     disown
 fi
 
-log "Bootstrap done. Logs: $LOG_DIR/"
+log "Bootstrap done. ROOT=$ROOT  DATA=$DATA  Logs=$LOG_DIR/"
 exit 0

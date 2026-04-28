@@ -30,7 +30,7 @@ The plugin ships pre-bundled `dist/`, so this only:
 
 Replace `<SCOPE>` below with the user's choice from Step 1, then run:
 
-!`mkdir -p /tmp/skillogy && SKILLOGY_INDEX_SCOPES="<SCOPE>" nohup node "${CLAUDE_PLUGIN_ROOT}/dist/cli/index.js" index --incremental --workers 8 --scopes "$SKILLOGY_INDEX_SCOPES" > /tmp/skillogy/setup-index.log 2>&1 &`
+!`mkdir -p /tmp/skillogy && SKILLOGY_INDEX_SCOPES="<SCOPE>" nohup bash "${CLAUDE_PLUGIN_ROOT}/scripts/skillogy-cli.sh" index --incremental --workers 8 --scopes "$SKILLOGY_INDEX_SCOPES" > /tmp/skillogy/setup-index.log 2>&1 &`
 
 ### Step 4 — Report to the user
 
