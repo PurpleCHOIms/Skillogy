@@ -39,7 +39,7 @@
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run lint && npm run test && npm run build"
+    "prepublishOnly": "npm run lint && npm run build && npm run test"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.111",
